@@ -3,6 +3,7 @@
   "name": "LinkedIn Job Description Collector",
   "version": "2.0.0",
   "description": "AI-powered LinkedIn job description collector. Extracts, classifies, and saves structured job data matching your profile.",
+  "author": { "name": "Daniel Barquero", "url": "https://www.linkedin.com/in/danielbrq/" },
   "permissions": [
     "storage"
   ],
