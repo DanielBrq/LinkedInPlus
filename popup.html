@@ -53,9 +53,13 @@
         <input type="text" id="aiModelInput" placeholder="gpt-4o-mini">
       </div>
 
-      <label for="aiProfileInput">My Profile / CV</label>
-      <div class="hint">Skills, experience, what you're looking for. The AI matches against this.</div>
+      <label for="aiProfileInput">Filters</label>
+      <div class="hint">Skills, experience, what you're looking for. The AI matches jobs against this.</div>
       <textarea id="aiProfileInput" placeholder="Senior Angular / TypeScript developer. 5+ years experience. Interested in remote roles, fintech, scale-ups..." rows="4"></textarea>
+
+      <label for="aiNegativeInput">Negative Filters</label>
+      <div class="hint">What you want to exclude. The AI rejects jobs matching this.</div>
+      <textarea id="aiNegativeInput" placeholder="No Java, no on-site, no agencies, no freelance..." rows="3"></textarea>
     </div>
 
     <div class="card">

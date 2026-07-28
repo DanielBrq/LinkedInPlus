@@ -11,7 +11,7 @@
 - **Auto-detection** — scans LinkedIn feed and job posts via `[data-testid="expandable-text-box"]`
 - **Smart pre-filter** — skips irrelevant posts (e.g. `#opentowork`) before AI call, saving tokens
 - **AI classification** — sends descriptions to an OpenAI-compatible API and returns structured data: title, location, modality, technologies, fit score, application link/email
-- **Profile matching** — only saves jobs that match your CV; non-matching posts get hidden
+- **Filter matching** — only saves jobs that match your filters; non-matching posts get hidden
 - **Deduplication** — SHA-256 hashing prevents duplicate storage
 - **Built-in viewer** — browse saved jobs with fit score badges, tech tags, and description previews
 
@@ -39,11 +39,12 @@ No build step required — the extension is pure vanilla JS.
 Open the extension popup and expand **AI Semantic Filter**. You need three things:
 
 | Field | What to put |
-|---|---|
+|---|---|---|
 | **Gateway URL** | Endpoint for chat completions. Defaults to Vercel AI Gateway, but you can use any OpenAI-compatible API (OpenAI, DeepSeek, Groq, Together, etc.) |
 | **API Key** | Your API key / bearer token. Stored locally in `chrome.storage` — never sent anywhere except the AI provider. |
 | **Model** | A cheap classification model like `gpt-4o-mini` or `deepseek-chat`. The model receives a system prompt + the job description and returns structured JSON. |
-| **My Profile / CV** | Paste your skills, experience, and what you're looking for. The AI uses this text to decide if a job is a fit. Be specific: *"Senior Angular developer, 5+ years, interested in remote fintech roles"*. |
+| **Filters** | What you're looking for: skills, experience, preferred industries. The AI matches jobs against this. Be specific: *"Senior Angular developer, 5+ years, interested in remote fintech roles"*. |
+| **Negative Filters** | What you want to exclude. The AI rejects jobs matching this. E.g. *"No Java, no on-site, no agencies"*. |
 
 All fields save automatically as you type.
 
@@ -56,7 +57,7 @@ All fields save automatically as you type.
 | **Hide non-relevant posts** | ON | Hide posts that don't pass AI classification. The post gets `display: none` after a short delay. |
 | **Educate LinkedIn algorithm** | OFF | For every rejected post (pre-filter or AI), automatically clicks the "Not interested" menu option on the post. This teaches LinkedIn's algorithm to show you fewer irrelevant posts over time. |
 
-**Tip:** Start with "Educate LinkedIn algorithm" OFF until you've tuned your profile text and verified the AI is classifying correctly. Then turn it on so LinkedIn itself learns what you don't want.
+**Tip:** Start with "Educate LinkedIn algorithm" OFF until you've tuned your filters and verified the AI is classifying correctly. Then turn it on so LinkedIn itself learns what you don't want.
 
 ### 3. What happens when you scroll LinkedIn
 
@@ -73,7 +74,7 @@ Is the description long enough (< 30 chars)?
   ├─ NO → click "Not interested" (if enabled) → hide → done
   └─ YES →
       ↓
-AI classifies against your profile
+AI classifies against your filters + negative filters
   ├─ RELEVANT (fitScore ≥ 50)
   │   ├─ green outline on the post
   │   └─ saved to storage (if toggle ON)

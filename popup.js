@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const aiKeyInput = document.getElementById('aiKeyInput');
   const aiModelInput = document.getElementById('aiModelInput');
   const aiProfileInput = document.getElementById('aiProfileInput');
+  const aiNegativeInput = document.getElementById('aiNegativeInput');
 
   // Show saved job count
   /** @returns {Promise<Object[]>} */
@@ -66,7 +67,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   aiGatewayInput.value = aiConfig.gatewayUrl || '';
   aiKeyInput.value = aiConfig.apiKey || '';
   aiModelInput.value = aiConfig.model || DEFAULT_MODEL;
-  aiProfileInput.value = aiConfig.userProfile || '';
+  aiProfileInput.value = aiConfig.filters || '';
+  aiNegativeInput.value = aiConfig.negativeFilters || '';
 
   // Debug toggle → show/hide delay slider row
   debugToggle.addEventListener('change', () => {
@@ -103,7 +105,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         gatewayUrl: aiGatewayInput.value.trim(),
         apiKey: aiKeyInput.value.trim(),
         model: aiModelInput.value.trim() || DEFAULT_MODEL,
-        userProfile: aiProfileInput.value
+        filters: aiProfileInput.value,
+        negativeFilters: aiNegativeInput.value
       });
     }, AI_DEBOUNCE_MS);
   }
@@ -128,6 +131,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   aiProfileInput.addEventListener('input', autoSaveAI);
   aiProfileInput.addEventListener('input', autoResizeTextarea);
   autoResizeTextarea.call(aiProfileInput);
+  aiNegativeInput.addEventListener('input', autoSaveAI);
+  aiNegativeInput.addEventListener('input', autoResizeTextarea);
+  autoResizeTextarea.call(aiNegativeInput);
 
   // Toggle: save matches, hide non-relevant, not interested
   saveMatchesToggle.checked = await getSaveMatchesEnabled();

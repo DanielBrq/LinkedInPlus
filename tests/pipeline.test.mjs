@@ -13,7 +13,7 @@ const CTX = {
   notInterestedEnabled: false,
   saveMatchesEnabled: true,
   hideNonRelevantEnabled: true,
-  aiConfig: { userProfile: 'profile', apiKey: 'k' },
+  aiConfig: { filters: 'profile', negativeFilters: '', apiKey: 'k' },
 };
 
 const NEG_POST = '[role="listitem"]';
