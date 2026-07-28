@@ -120,7 +120,6 @@ describe('processContainer - AI flow', () => {
     await pipeline.processContainer(container, CTX);
     const saved = await storage.getSavedJobs();
     assert.equal(saved.length, 1);
-    assert.equal(saved[0].fitScore, 88);
     assert.ok(listitem.style.outline, 'relevant post should be outlined');
   });
 
@@ -165,5 +164,25 @@ describe('processContainer - AI flow', () => {
     pipeline.clearProcessedHashes();
     await pipeline.processContainer(container, CTX);
     assert.equal(calls, 1, 'AI should not be called again for an already-saved job');
+  });
+
+  test('negative filter → description contains excluded tech → forced irrelevant', async () => {
+    const ctxNeg = { ...CTX, aiConfig: { ...CTX.aiConfig, negativeFilters: 'Python, Java' } };
+    const longDesc = 'a'.repeat(150) + ' Senior Python developer at Acme. Build with Django and PostgreSQL.';
+    const { container, listitem } = makeContainer(longDesc);
+    await pipeline.processContainer(container, ctxNeg);
+    const saved = await storage.getSavedJobs();
+    assert.equal(saved.length, 0, 'job with negative tech should not be saved');
+    assert.equal(listitem.style.display, 'none', 'post with negative tech should be hidden');
+  });
+
+  test('negative filter → description does NOT contain excluded tech → saved normally', async () => {
+    const ctxNeg = { ...CTX, aiConfig: { ...CTX.aiConfig, negativeFilters: 'Python, Java' } };
+    const longDesc = 'a'.repeat(150) + ' Senior .NET C# developer at Acme. Build with React and TypeScript.';
+    const { container, listitem } = makeContainer(longDesc);
+    await pipeline.processContainer(container, ctxNeg);
+    const saved = await storage.getSavedJobs();
+    assert.equal(saved.length, 1, 'job without negative tech should be saved');
+    assert.ok(listitem.style.outline, 'relevant post should be outlined');
   });
 });

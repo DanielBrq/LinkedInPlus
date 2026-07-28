@@ -173,9 +173,9 @@ describe('classifyWithAI - cache & fallback', () => {
       }, 20);
     });
     await Promise.all([
-      classifyWithAI('a', 'hq1', PROFILE, '', AI_CONFIG),
-      classifyWithAI('b', 'hq2', PROFILE, '', AI_CONFIG),
-      classifyWithAI('c', 'hq3', PROFILE, '', AI_CONFIG),
+      classifyWithAI('desc', 'hq1', PROFILE, '', AI_CONFIG),
+      classifyWithAI('desc', 'hq2', PROFILE, '', AI_CONFIG),
+      classifyWithAI('desc', 'hq3', PROFILE, '', AI_CONFIG),
     ]);
     assert.equal(peak, 1);
     sm.mock.restore();
@@ -203,7 +203,7 @@ describe('buildUserPrompt & stripBoilerplate (via callGateway)', () => {
       capturedPrompt = msg.body.messages[1].content;
       cb(mockReply(JSON.stringify(VALID_RESULT)));
     });
-    const messy = 'Check https://example.com/jobs/123 for more. We are an Equal Opportunity Employer and EOE M/F/V/D. Real job content here.';
+    const messy = 'Senior Frontend React TypeScript developer. Check https://example.com/jobs/123 for more. We are an Equal Opportunity Employer and EOE M/F/V/D. Real job content here.';
     await classifyWithAI(messy, 'hp1', PROFILE, '', AI_CONFIG);
     assert.ok(!capturedPrompt.includes('https://example.com'), 'URL should be stripped');
     assert.ok(!/equal opportunity/i.test(capturedPrompt), 'EEO boilerplate should be stripped');

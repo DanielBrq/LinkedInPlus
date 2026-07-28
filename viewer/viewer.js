@@ -195,6 +195,7 @@ function updateStats() {
 // Load jobs from storage
 async function loadData() {
   jobs = await getSavedJobs();
+  jobs.sort((a, b) => (b.fitScore || 0) - (a.fitScore || 0));
   renderList();
 }
 
