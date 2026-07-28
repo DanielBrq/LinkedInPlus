@@ -1,5 +1,5 @@
 import { getSavedJobs, clearSavedJobs, removeJob } from '../lib/storage.js';
-import { downloadFile } from '../lib/utils.js';
+import { downloadFile, esc } from '../lib/utils.js';
 import {
   CSS_COLLAPSED, DESC_COLLAPSE_AT, FIT_HIGH, FIT_MID,
   FIT_SCORE_DEFAULT, FADE_OUT_DURATION_MS,
@@ -154,13 +154,6 @@ function buildCard(job, idx) {
   });
 
   return card;
-}
-
-// Escape HTML entities
-function esc(s) {
-  const div = document.createElement('div');
-  div.textContent = s;
-  return div.innerHTML;
 }
 
 // Re-number card indices after deletion
