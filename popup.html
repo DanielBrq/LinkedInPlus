@@ -10,6 +10,10 @@
     .popup-body textarea { transition: border-color .2s, box-shadow .2s; }
     .popup-body input[type="text"],
     .popup-body input[type="password"] { transition: border-color .2s, box-shadow .2s; }
+    .preset-row { display: flex; gap: 6px; align-items: center; }
+    .preset-select { flex: 1; padding: 7px 9px; border: 1px solid var(--input-border); border-radius: 6px; font-size: 13px; font-family: inherit; background: var(--input-bg); color: var(--text-primary); cursor: pointer; }
+    .preset-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--focus-ring); }
+    .preset-manage-btn { flex-shrink: 0; padding: 7px 10px; font-size: 15px; }
   </style>
 </head>
 <body class="popup-body">
@@ -34,32 +38,11 @@
     </div>
 
     <div class="card">
-      <div class="card-title collapsible-header" id="aiCollapseToggle">
-        <span>AI Semantic Filter <span class="badge-ai">Only mode</span></span>
-        <span class="collapse-chevron">▼</span>
+      <div class="card-title">AI Presets</div>
+      <div class="preset-row">
+        <select id="presetSelect" class="preset-select"></select>
+        <button id="managePresetsBtn" class="secondary preset-manage-btn" title="Manage presets">⚙</button>
       </div>
-
-      <div class="collapse-wrap" id="aiCollapseWrap">
-        <label for="aiGatewayInput">Gateway URL</label>
-        <div class="hint">Vercel AI Gateway (OpenAI-compatible endpoint).</div>
-        <input type="text" id="aiGatewayInput" placeholder="https://ai-gateway.vercel.sh/v1/chat/completions">
-
-        <label for="aiKeyInput">API Key</label>
-        <div class="hint">Bearer token. Stored locally in chrome.storage.</div>
-        <input type="password" id="aiKeyInput" placeholder="sk-..." autocomplete="off">
-
-        <label for="aiModelInput">Model</label>
-        <div class="hint">Use a cheap classification model (e.g. gpt-4o-mini).</div>
-        <input type="text" id="aiModelInput" placeholder="gpt-4o-mini">
-      </div>
-
-      <label for="aiProfileInput">Filters</label>
-      <div class="hint">Skills, experience, what you're looking for. The AI matches jobs against this.</div>
-      <textarea id="aiProfileInput" placeholder="Senior Angular / TypeScript developer. 5+ years experience. Interested in remote roles, fintech, scale-ups..." rows="4"></textarea>
-
-      <label for="aiNegativeInput">Negative Filters</label>
-      <div class="hint">What you want to exclude. The AI rejects jobs matching this.</div>
-      <textarea id="aiNegativeInput" placeholder="No Java, no on-site, no agencies, no freelance..." rows="3"></textarea>
     </div>
 
     <div class="card">
@@ -95,6 +78,14 @@
       <span class="toggle-label">Educate LinkedIn algorithm (click "Not interested")</span>
       <label class="switch">
         <input type="checkbox" id="notInterestedToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="toggle-row">
+      <span class="toggle-label">Block images/videos (faster scan, less bandwidth)</span>
+      <label class="switch">
+        <input type="checkbox" id="blockMediaToggle">
         <span class="slider"></span>
       </label>
     </div>

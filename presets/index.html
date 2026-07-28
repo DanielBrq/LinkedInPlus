@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Presets — LinkedIn Collector</title>
+  <link rel="stylesheet" href="../theme.css">
+</head>
+<body class="viewer-body">
+<div class="container">
+  <header>
+    <div class="header-left">
+      <h1>AI Presets</h1>
+    </div>
+    <div class="stats">
+      <span class="stats-number" id="statsCount">0</span> presets
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <button class="primary" id="addPresetBtn">+ Add Preset</button>
+  </div>
+
+  <div id="listContainer">
+    <div class="empty-state" id="emptyState">
+      <strong>No presets configured</strong>
+      Add a preset to connect to an AI provider.
+    </div>
+  </div>
+</div>
+
+<script type="module" src="presets.js"></script>
+</body>
+</html>

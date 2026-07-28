@@ -1,14 +1,15 @@
 import { getSavedJobs, clearSavedJobs } from './lib/storage.js';
 import {
   getEnabled, saveEnabled,
-  getAIConfig, saveAIConfig,
+  getPresets, getActivePresetName, setActivePresetName,
   getDisplayConfig, saveDisplayConfig,
   getNotInterestedEnabled, saveNotInterestedEnabled,
   getSaveMatchesEnabled, saveSaveMatchesEnabled,
   getHideNonRelevantEnabled, saveHideNonRelevantEnabled,
+  getBlockMediaEnabled, saveBlockMediaEnabled,
 } from './lib/settings.js';
 import {
-  DEFAULT_HIDE_DELAY_MS, DISPLAY_DEBOUNCE_MS, AI_DEBOUNCE_MS, DEFAULT_MODEL
+  DEFAULT_HIDE_DELAY_MS, DISPLAY_DEBOUNCE_MS
 } from './lib/constants.js';
 
 const STATUS_ACTIVE = 'Collector active';
@@ -30,13 +31,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const saveMatchesToggle = document.getElementById('saveMatchesToggle');
   const hideNonRelevantToggle = document.getElementById('hideNonRelevantToggle');
   const notInterestedToggle = document.getElementById('notInterestedToggle');
+  const blockMediaToggle = document.getElementById('blockMediaToggle');
   const clearJobsBtn = document.getElementById('clearJobsBtn');
-
-  const aiGatewayInput = document.getElementById('aiGatewayInput');
-  const aiKeyInput = document.getElementById('aiKeyInput');
-  const aiModelInput = document.getElementById('aiModelInput');
-  const aiProfileInput = document.getElementById('aiProfileInput');
-  const aiNegativeInput = document.getElementById('aiNegativeInput');
+  const presetSelect = document.getElementById('presetSelect');
+  const managePresetsBtn = document.getElementById('managePresetsBtn');
 
   // Show saved job count
   /** @returns {Promise<Object[]>} */
@@ -63,12 +61,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   delayValue.textContent = delaySlider.value;
   delayRow.style.display = debugToggle.checked ? '' : 'none';
 
-  const aiConfig = await getAIConfig();
-  aiGatewayInput.value = aiConfig.gatewayUrl || '';
-  aiKeyInput.value = aiConfig.apiKey || '';
-  aiModelInput.value = aiConfig.model || DEFAULT_MODEL;
-  aiProfileInput.value = aiConfig.filters || '';
-  aiNegativeInput.value = aiConfig.negativeFilters || '';
+  // Load presets and populate selector
+  const presets = await getPresets();
+  const activeName = await getActivePresetName();
+  function populatePresetSelect() {
+    presetSelect.innerHTML = '';
+    for (const name of Object.keys(presets)) {
+      const opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name;
+      if (name === activeName) opt.selected = true;
+      presetSelect.appendChild(opt);
+    }
+  }
+  populatePresetSelect();
+
+  // Switch active preset
+  presetSelect.addEventListener('change', async () => {
+    await setActivePresetName(presetSelect.value);
+  });
+
+  // Manage presets → open page in new tab
+  managePresetsBtn.addEventListener('click', () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL('presets/index.html') });
+  });
 
   // Debug toggle → show/hide delay slider row
   debugToggle.addEventListener('change', () => {
@@ -95,46 +111,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, DISPLAY_DEBOUNCE_MS);
   }
 
-  // Debounced save for AI config
-  let aiDebounceTimer;
-  /** @returns {void} */
-  function autoSaveAI() {
-    clearTimeout(aiDebounceTimer);
-    aiDebounceTimer = setTimeout(async () => {
-      await saveAIConfig({
-        gatewayUrl: aiGatewayInput.value.trim(),
-        apiKey: aiKeyInput.value.trim(),
-        model: aiModelInput.value.trim() || DEFAULT_MODEL,
-        filters: aiProfileInput.value,
-        negativeFilters: aiNegativeInput.value
-      });
-    }, AI_DEBOUNCE_MS);
-  }
-
-  // Auto-grow textarea for profile input
-  /** @returns {void} */
-  function autoResizeTextarea() {
-    this.style.height = 'auto';
-    this.style.height = this.scrollHeight + 'px';
-  }
-
-  // Collapsible AI config section
-  document.getElementById('aiCollapseToggle').addEventListener('click', () => {
-    document.getElementById('aiCollapseWrap').classList.toggle('open');
-    document.getElementById('aiCollapseToggle').classList.toggle('open');
-  });
-
-  // Auto-save on any AI field change
-  aiGatewayInput.addEventListener('input', autoSaveAI);
-  aiKeyInput.addEventListener('input', autoSaveAI);
-  aiModelInput.addEventListener('input', autoSaveAI);
-  aiProfileInput.addEventListener('input', autoSaveAI);
-  aiProfileInput.addEventListener('input', autoResizeTextarea);
-  autoResizeTextarea.call(aiProfileInput);
-  aiNegativeInput.addEventListener('input', autoSaveAI);
-  aiNegativeInput.addEventListener('input', autoResizeTextarea);
-  autoResizeTextarea.call(aiNegativeInput);
-
   // Toggle: save matches, hide non-relevant, not interested
   saveMatchesToggle.checked = await getSaveMatchesEnabled();
   hideNonRelevantToggle.checked = await getHideNonRelevantEnabled();
@@ -148,6 +124,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
   notInterestedToggle.addEventListener('change', () => {
     saveNotInterestedEnabled(notInterestedToggle.checked);
+  });
+  blockMediaToggle.checked = await getBlockMediaEnabled();
+  blockMediaToggle.addEventListener('change', () => {
+    saveBlockMediaEnabled(blockMediaToggle.checked);
   });
 
   // Master enable/disable toggle
