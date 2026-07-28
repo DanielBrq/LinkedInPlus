@@ -1,11 +1,4 @@
 {
   "name": "linkedin-scrap",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "openai": "^6.49.0"
-  },
-  "devDependencies": {
-    "dotenv": "^17.4.2"
-  }
+  "private": true
 }
