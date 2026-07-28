@@ -43,77 +43,77 @@ describe('parseResponse (via callGateway)', () => {
   after(() => { sendMock.mock.restore(); });
 
   test('extracts valid plain JSON', async () => {
-    const r = await classifyWithAI('desc', 'h1', PROFILE, AI_CONFIG);
+    const r = await classifyWithAI('desc', 'h1', PROFILE, '', AI_CONFIG);
     assert.equal(r.relevant, true);
     assert.equal(r.fitScore, 85);
   });
 
   test('extracts JSON wrapped in markdown code block', async () => {
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply('```json\n' + JSON.stringify(VALID_RESULT) + '\n```')));
-    const r = await classifyWithAI('desc', 'h2', PROFILE, AI_CONFIG);
+    const r = await classifyWithAI('desc', 'h2', PROFILE, '', AI_CONFIG);
     assert.equal(r.relevant, true);
   });
 
   test('extracts JSON surrounded by prose', async () => {
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply('Here is the result:\n' + JSON.stringify(VALID_RESULT) + '\nDone.')));
-    const r = await classifyWithAI('desc', 'h3', PROFILE, AI_CONFIG);
+    const r = await classifyWithAI('desc', 'h3', PROFILE, '', AI_CONFIG);
     assert.equal(r.relevant, true);
   });
 
   test('returns AI_UNAVAILABLE_RESULT when relevant field is missing', async () => {
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply(JSON.stringify({ fitScore: 50, title: 'No relevant field' }))));
-    const r = await classifyWithAI('desc', 'h4', PROFILE, AI_CONFIG);
+    const r = await classifyWithAI('desc', 'h4', PROFILE, '', AI_CONFIG);
     assert.equal(r.reason, 'ai-unavailable');
   });
 
   test('returns AI_UNAVAILABLE_RESULT when relevant is not boolean', async () => {
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply(JSON.stringify({ relevant: 'true' }))));
-    const r = await classifyWithAI('desc', 'h5', PROFILE, AI_CONFIG);
+    const r = await classifyWithAI('desc', 'h5', PROFILE, '', AI_CONFIG);
     assert.equal(r.reason, 'ai-unavailable');
   });
 
   test('returns AI_UNAVAILABLE_RESULT on malformed JSON', async () => {
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply('not json at all { broken')));
-    const r = await classifyWithAI('desc', 'h6', PROFILE, AI_CONFIG);
+    const r = await classifyWithAI('desc', 'h6', PROFILE, '', AI_CONFIG);
     assert.equal(r.reason, 'ai-unavailable');
   });
 
   test('clamps fitScore below 0 to 0', async () => {
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply(JSON.stringify({ ...VALID_RESULT, fitScore: -50 }))));
-    const r = await classifyWithAI('desc', 'h7', PROFILE, AI_CONFIG);
+    const r = await classifyWithAI('desc', 'h7', PROFILE, '', AI_CONFIG);
     assert.equal(r.fitScore, 0);
   });
 
   test('clamps fitScore above 100 to 100', async () => {
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply(JSON.stringify({ ...VALID_RESULT, fitScore: 250 }))));
-    const r = await classifyWithAI('desc', 'h8', PROFILE, AI_CONFIG);
+    const r = await classifyWithAI('desc', 'h8', PROFILE, '', AI_CONFIG);
     assert.equal(r.fitScore, 100);
   });
 
   test('rejects invalid modality', async () => {
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply(JSON.stringify({ ...VALID_RESULT, modality: 'telework' }))));
-    const r = await classifyWithAI('desc', 'h9', PROFILE, AI_CONFIG);
+    const r = await classifyWithAI('desc', 'h9', PROFILE, '', AI_CONFIG);
     assert.equal(r.modality, null);
   });
 
   test('accepts valid modalities (remote/hybrid/onsite)', async () => {
     for (const m of ['remote', 'hybrid', 'onsite']) {
       sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply(JSON.stringify({ ...VALID_RESULT, modality: m }))));
-      const r = await classifyWithAI('desc', `hm-${m}`, PROFILE, AI_CONFIG);
+      const r = await classifyWithAI('desc', `hm-${m}`, PROFILE, '', AI_CONFIG);
       assert.equal(r.modality, m);
     }
   });
 
   test('filters falsy values from technologies array', async () => {
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply(JSON.stringify({ ...VALID_RESULT, technologies: ['react', null, '', 'ts', undefined, false] }))));
-    const r = await classifyWithAI('desc', 'h10', PROFILE, AI_CONFIG);
+    const r = await classifyWithAI('desc', 'h10', PROFILE, '', AI_CONFIG);
     assert.deepEqual(r.technologies, ['react', 'ts']);
   });
 
   test('truncates reason over 200 chars', async () => {
     const longReason = 'x'.repeat(500);
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply(JSON.stringify({ ...VALID_RESULT, reason: longReason }))));
-    const r = await classifyWithAI('desc', 'h11', PROFILE, AI_CONFIG);
+    const r = await classifyWithAI('desc', 'h11', PROFILE, '', AI_CONFIG);
     assert.equal(r.reason.length, 200);
   });
 });
@@ -124,25 +124,25 @@ describe('classifyWithAI - cache & fallback', () => {
   beforeEach(() => { clearAICache(); });
 
   test('returns AI_UNAVAILABLE_RESULT when apiKey is missing', async () => {
-    const r = await classifyWithAI('desc', 'hf1', PROFILE, { gatewayUrl: 'x', model: 'y' });
+    const r = await classifyWithAI('desc', 'hf1', PROFILE, '', { gatewayUrl: 'x', model: 'y' });
     assert.equal(r.reason, 'ai-unavailable');
   });
 
   test('returns AI_UNAVAILABLE_RESULT when profile is empty', async () => {
-    const r = await classifyWithAI('desc', 'hf2', '', { apiKey: 'k' });
+    const r = await classifyWithAI('desc', 'hf2', '', '', { apiKey: 'k' });
     assert.equal(r.reason, 'ai-unavailable');
   });
 
   test('returns AI_UNAVAILABLE_RESULT when description is empty', async () => {
-    const r = await classifyWithAI('', 'hf3', PROFILE, { apiKey: 'k' });
+    const r = await classifyWithAI('', 'hf3', PROFILE, '', { apiKey: 'k' });
     assert.equal(r.reason, 'ai-unavailable');
   });
 
   test('second call with same hash returns cached result without hitting send', async () => {
     let calls = 0;
     const sm = mock.method(chrome.runtime, 'sendMessage', (_msg, cb) => { calls++; cb(mockReply(JSON.stringify(VALID_RESULT))); });
-    const r1 = await classifyWithAI('desc', 'h-cache', PROFILE, AI_CONFIG);
-    const r2 = await classifyWithAI('desc', 'h-cache', PROFILE, AI_CONFIG);
+    const r1 = await classifyWithAI('desc', 'h-cache', PROFILE, '', AI_CONFIG);
+    const r2 = await classifyWithAI('desc', 'h-cache', PROFILE, '', AI_CONFIG);
     assert.equal(calls, 1);
     assert.equal(r1.fitScore, 85);
     assert.equal(r2.cached, true);
@@ -153,8 +153,8 @@ describe('classifyWithAI - cache & fallback', () => {
     let calls = 0;
     const sm = mock.method(chrome.runtime, 'sendMessage', (_msg, cb) => { calls++; cb(mockReply(JSON.stringify(VALID_RESULT))); });
     const [r1, r2] = await Promise.all([
-      classifyWithAI('desc', 'h-dedup', PROFILE, AI_CONFIG),
-      classifyWithAI('desc', 'h-dedup', PROFILE, AI_CONFIG),
+      classifyWithAI('desc', 'h-dedup', PROFILE, '', AI_CONFIG),
+      classifyWithAI('desc', 'h-dedup', PROFILE, '', AI_CONFIG),
     ]);
     assert.equal(calls, 1);
     assert.equal(r1.fitScore, 85);
@@ -173,9 +173,9 @@ describe('classifyWithAI - cache & fallback', () => {
       }, 20);
     });
     await Promise.all([
-      classifyWithAI('a', 'hq1', PROFILE, AI_CONFIG),
-      classifyWithAI('b', 'hq2', PROFILE, AI_CONFIG),
-      classifyWithAI('c', 'hq3', PROFILE, AI_CONFIG),
+      classifyWithAI('a', 'hq1', PROFILE, '', AI_CONFIG),
+      classifyWithAI('b', 'hq2', PROFILE, '', AI_CONFIG),
+      classifyWithAI('c', 'hq3', PROFILE, '', AI_CONFIG),
     ]);
     assert.equal(peak, 1);
     sm.mock.restore();
@@ -184,9 +184,9 @@ describe('classifyWithAI - cache & fallback', () => {
   test('clearAICache resets state so next call hits send again', async () => {
     let calls = 0;
     const sm = mock.method(chrome.runtime, 'sendMessage', (_msg, cb) => { calls++; cb(mockReply(JSON.stringify(VALID_RESULT))); });
-    await classifyWithAI('desc', 'h-clr', PROFILE, AI_CONFIG);
+    await classifyWithAI('desc', 'h-clr', PROFILE, '', AI_CONFIG);
     clearAICache();
-    await classifyWithAI('desc', 'h-clr', PROFILE, AI_CONFIG);
+    await classifyWithAI('desc', 'h-clr', PROFILE, '', AI_CONFIG);
     assert.equal(calls, 2);
     sm.mock.restore();
   });
@@ -204,7 +204,7 @@ describe('buildUserPrompt & stripBoilerplate (via callGateway)', () => {
       cb(mockReply(JSON.stringify(VALID_RESULT)));
     });
     const messy = 'Check https://example.com/jobs/123 for more. We are an Equal Opportunity Employer and EOE M/F/V/D. Real job content here.';
-    await classifyWithAI(messy, 'hp1', PROFILE, AI_CONFIG);
+    await classifyWithAI(messy, 'hp1', PROFILE, '', AI_CONFIG);
     assert.ok(!capturedPrompt.includes('https://example.com'), 'URL should be stripped');
     assert.ok(!/equal opportunity/i.test(capturedPrompt), 'EEO boilerplate should be stripped');
     assert.ok(capturedPrompt.includes('Real job content here.'));
@@ -218,7 +218,7 @@ describe('buildUserPrompt & stripBoilerplate (via callGateway)', () => {
       cb(mockReply(JSON.stringify(VALID_RESULT)));
     });
     const long = 'a'.repeat(5000);
-    await classifyWithAI(long, 'hp2', PROFILE, AI_CONFIG);
+    await classifyWithAI(long, 'hp2', PROFILE, '', AI_CONFIG);
     assert.ok(capturedPrompt.includes('...'), 'truncation marker should be present');
     const descMatch = capturedPrompt.match(/Job description:\n([\s\S]*?)\n\nExtract/);
     assert.ok(descMatch[1].length <= 4003, 'description section should be truncated');
