@@ -436,7 +436,17 @@ button.danger:hover {
   min-height: 100vh;
 }
 
-.container { max-width: 860px; margin: 0 auto; }
+.container { max-width: 1200px; margin: 0 auto; }
+
+#listContainer {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  #listContainer { grid-template-columns: 1fr; }
+}
 
 header {
   display: flex;
@@ -524,8 +534,8 @@ button:disabled {
 }
 
 .viewer-body .card {
+  position: relative;
   border-radius: 10px;
-  margin-bottom: 14px;
   overflow: hidden;
 }
 
@@ -567,7 +577,7 @@ button:disabled {
 }
 
 .card-body {
-  padding: 14px 16px;
+  padding: 16px 18px;
 }
 
 .field-row {
@@ -608,34 +618,28 @@ button:disabled {
 }
 
 .desc-preview {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.65;
+  color: var(--text-primary);
   white-space: pre-wrap;
   word-break: break-word;
   margin-top: 4px;
 }
 
 .desc-preview.collapsed {
-  max-height: 80px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  position: relative;
-}
-
-.desc-preview.collapsed::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 36px;
-  background: linear-gradient(transparent, var(--card-bg));
 }
 
 .card-actions {
+  position: relative;
   display: flex;
   gap: 6px;
   padding: 8px 16px;
+  padding-right: 72px;
+  min-height: 40px;
   border-top: 1px solid var(--border);
 }
 
@@ -645,7 +649,13 @@ button:disabled {
   border-radius: 6px;
 }
 
-.card-actions .flex-spacer { flex: 1; }
+.card-actions .flex-spacer { display: none; }
+
+.card-actions button.danger {
+  position: absolute;
+  bottom: 8px;
+  right: 16px;
+}
 
 .fade-out {
   transition: opacity .25s, transform .25s;
@@ -657,4 +667,129 @@ button:disabled {
   .viewer-body { padding: 16px; }
   header { flex-direction: column; align-items: flex-start; }
   .field-row { flex-direction: column; gap: 8px; }
+  .card-body { padding: 12px 14px; }
+}
+
+/* ===== PRESETS ===== */
+.preset-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+
+.preset-active-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--switch-bg);
+  flex-shrink: 0;
+  transition: background .2s;
+}
+
+.preset-active-dot.active {
+  background: var(--success);
+  box-shadow: 0 0 6px rgba(63,179,127,0.4);
+}
+
+.preset-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.preset-name.active {
+  color: var(--success);
+}
+
+.preset-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+
+.preset-card-actions {
+  display: flex;
+  gap: 6px;
+  padding: 8px 16px;
+}
+
+.preset-card-actions button {
+  font-size: 13px;
+  padding: 5px 14px;
+  border-radius: 6px;
+}
+
+.preset-editor {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  background: rgba(0,0,0,0.15);
+}
+
+.preset-editor label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+  margin-top: 8px;
+}
+
+.preset-editor label:first-child {
+  margin-top: 0;
+}
+
+.preset-editor input[type="text"],
+.preset-editor input[type="password"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.preset-editor input:focus,
+.preset-editor textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+.preset-editor textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 9px;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--input-bg);
+  color: var(--text-primary);
+  resize: vertical;
+  min-height: 44px;
+  margin-bottom: 4px;
+}
+
+.preset-editor-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.preset-editor-actions button {
+  font-size: 13px;
+  padding: 6px 18px;
+  border-radius: 6px;
 }
