@@ -16,7 +16,9 @@ const STATUS_PAUSED = 'Collector paused';
 const CONFIRM_CLEAR = 'Are you sure you want to delete all saved job descriptions?';
 const CLASS_INACTIVE = ' inactive';
 
+// Init popup UI: load configs, bind events
 document.addEventListener('DOMContentLoaded', async () => {
+  // DOM refs
   const jobCountEl = document.getElementById('jobCount');
   const enableToggle = document.getElementById('enableToggle');
   const debugToggle = document.getElementById('debugToggle');
@@ -35,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const aiModelInput = document.getElementById('aiModelInput');
   const aiProfileInput = document.getElementById('aiProfileInput');
 
+  // Show saved job count
   /** @returns {Promise<Object[]>} */
   async function updateJobCount() {
     const jobs = await getSavedJobs();
@@ -42,12 +45,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     return jobs;
   }
 
+  // Update status dot + text
   /** @param {boolean} enabled @returns {void} */
   function updateStatus(enabled) {
     statusDot.className = 'status-dot' + (enabled ? '' : CLASS_INACTIVE);
     statusText.textContent = enabled ? STATUS_ACTIVE : STATUS_PAUSED;
   }
 
+  // Load persisted settings
   enableToggle.checked = await getEnabled();
   updateStatus(enableToggle.checked);
 
@@ -63,6 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   aiModelInput.value = aiConfig.model || DEFAULT_MODEL;
   aiProfileInput.value = aiConfig.userProfile || '';
 
+  // Debug toggle → show/hide delay slider row
   debugToggle.addEventListener('change', () => {
     delayRow.style.display = debugToggle.checked ? '' : 'none';
     autoSaveDisplay();
@@ -74,6 +80,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await updateJobCount();
 
+  // Debounced save for display config
   let displayDebounceTimer;
   /** @returns {void} */
   function autoSaveDisplay() {
@@ -86,6 +93,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, DISPLAY_DEBOUNCE_MS);
   }
 
+  // Debounced save for AI config
   let aiDebounceTimer;
   /** @returns {void} */
   function autoSaveAI() {
@@ -100,17 +108,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, AI_DEBOUNCE_MS);
   }
 
+  // Auto-grow textarea for profile input
   /** @returns {void} */
   function autoResizeTextarea() {
     this.style.height = 'auto';
     this.style.height = this.scrollHeight + 'px';
   }
 
+  // Collapsible AI config section
   document.getElementById('aiCollapseToggle').addEventListener('click', () => {
     document.getElementById('aiCollapseWrap').classList.toggle('open');
     document.getElementById('aiCollapseToggle').classList.toggle('open');
   });
 
+  // Auto-save on any AI field change
   aiGatewayInput.addEventListener('input', autoSaveAI);
   aiKeyInput.addEventListener('input', autoSaveAI);
   aiModelInput.addEventListener('input', autoSaveAI);
@@ -118,6 +129,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   aiProfileInput.addEventListener('input', autoResizeTextarea);
   autoResizeTextarea.call(aiProfileInput);
 
+  // Toggle: save matches, hide non-relevant, not interested
   saveMatchesToggle.checked = await getSaveMatchesEnabled();
   hideNonRelevantToggle.checked = await getHideNonRelevantEnabled();
   notInterestedToggle.checked = await getNotInterestedEnabled();
@@ -132,15 +144,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     saveNotInterestedEnabled(notInterestedToggle.checked);
   });
 
+  // Master enable/disable toggle
   enableToggle.addEventListener('change', () => {
     saveEnabled(enableToggle.checked);
     updateStatus(enableToggle.checked);
   });
 
+  // Open viewer in new tab
   document.getElementById('openViewerBtn').addEventListener('click', () => {
     chrome.tabs.create({ url: chrome.runtime.getURL('viewer/index.html') });
   });
 
+  // Clear all saved jobs
   clearJobsBtn.addEventListener('click', async () => {
     if (confirm(CONFIRM_CLEAR)) {
       await clearSavedJobs();

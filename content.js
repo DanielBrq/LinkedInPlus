@@ -6,11 +6,13 @@ const MSG_DISABLED = 'Disabled by user.';
 const MSG_ENABLED_CHANGE = 'Enabled via config change.';
 const MSG_DISABLED_CHANGE = 'Disabled via config change.';
 
+// Init: load modules, inject styles, observe DOM
 (async function initContentScript() {
   let processContainer, clearProcessedHashes, MSG_CONFIG_UPDATED;
   let getEnabled, getAIConfig, getDisplayConfig, getNotInterestedEnabled, getSaveMatchesEnabled, getHideNonRelevantEnabled;
   let createObserver, INITIAL_SCAN_DELAY_MS;
 
+  // Dynamic imports of lib modules
   try {
     const pipeUrl = chrome.runtime.getURL('lib/pipeline.js');
     const settingsUrl = chrome.runtime.getURL('lib/settings.js');
@@ -37,10 +39,12 @@ const MSG_DISABLED_CHANGE = 'Disabled via config change.';
     return;
   }
 
+  // Inject CSS for visual feedback (rejected, pending, fadeout)
   const style = document.createElement('style');
   style.textContent = INJECTED_STYLES;
   document.head.appendChild(style);
 
+  // Read initial config from storage
   let enabled = await getEnabled();
   let aiConfig = await getAIConfig();
   let displayConfig = await getDisplayConfig();
@@ -48,12 +52,14 @@ const MSG_DISABLED_CHANGE = 'Disabled via config change.';
   let saveMatchesEnabled = await getSaveMatchesEnabled();
   let hideNonRelevantEnabled = await getHideNonRelevantEnabled();
 
+  // Create observer that processes new containers
   const obs = createObserver(DESCRIPTION_SELECTOR, container =>
     processContainer(container, {
       displayConfig, notInterestedEnabled, saveMatchesEnabled, hideNonRelevantEnabled, aiConfig
     })
   );
 
+  // Start or pause based on current enabled state
   if (enabled) {
     setTimeout(() => obs.scan(), INITIAL_SCAN_DELAY_MS);
     obs.start();
@@ -62,27 +68,34 @@ const MSG_DISABLED_CHANGE = 'Disabled via config change.';
     console.log(LOG_PREFIX, MSG_DISABLED);
   }
 
+  // Listen for config changes from popup
   if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
     chrome.storage.onChanged.addListener(async (changes, namespace) => {
       if (namespace !== 'local') return;
+      // AI config changed → re-scan
       if (changes.ai_config) {
         aiConfig = await getAIConfig();
         clearProcessedHashes();
         obs.scan();
         console.log(LOG_PREFIX, MSG_CONFIG_UPDATED);
       }
+      // Display config changed
       if (changes.display_config) {
         displayConfig = await getDisplayConfig();
       }
+      // Toggle: not interested auto-click
       if (changes.not_interested_enabled !== undefined) {
         notInterestedEnabled = changes.not_interested_enabled.newValue !== false;
       }
+      // Toggle: save matched jobs
       if (changes.save_matches !== undefined) {
         saveMatchesEnabled = changes.save_matches.newValue !== false;
       }
+      // Toggle: hide non-relevant posts
       if (changes.hide_non_relevant !== undefined) {
         hideNonRelevantEnabled = changes.hide_non_relevant.newValue !== false;
       }
+      // Master toggle enabled/disabled
       if (changes.collector_enabled !== undefined) {
         enabled = changes.collector_enabled.newValue !== false;
         if (enabled) {

@@ -18,19 +18,23 @@ const statsCount = document.getElementById('statsCount');
 
 let jobs = [];
 
+// CSS class for fit score badge
 function fitClass(score) {
   if (score >= FIT_HIGH) return 'fit-high';
   if (score >= FIT_MID) return 'fit-mid';
   return 'fit-low';
 }
 
+// Build a card DOM element from a job object
 function buildCard(job, idx) {
   const card = document.createElement('div');
   card.className = 'card';
 
+  // Fit score badge
   const fitScore = typeof job.fitScore === 'number' ? job.fitScore : FIT_SCORE_DEFAULT;
   const fClass = fitClass(fitScore);
 
+  // Header: index + title + fit badge
   const header = document.createElement('div');
   header.className = 'card-header';
   header.innerHTML = `
@@ -41,6 +45,7 @@ function buildCard(job, idx) {
   const body = document.createElement('div');
   body.className = 'card-body';
 
+  // Field rows: poster, company, location, modality, english, email, link
   const fields = document.createElement('div');
   fields.className = 'field-row';
 
@@ -69,6 +74,7 @@ function buildCard(job, idx) {
 
   body.appendChild(fields);
 
+  // Tech tag chips
   if (Array.isArray(job.technologies) && job.technologies.length > 0) {
     const techWrap = document.createElement('div');
     techWrap.style.marginBottom = '8px';
@@ -81,6 +87,7 @@ function buildCard(job, idx) {
     body.appendChild(techWrap);
   }
 
+  // Hashtag chips
   if (Array.isArray(job.hashtags) && job.hashtags.length > 0) {
     const tagWrap = document.createElement('div');
     job.hashtags.forEach(h => {
@@ -94,6 +101,7 @@ function buildCard(job, idx) {
     body.appendChild(tagWrap);
   }
 
+  // Collapsible description preview
   if (job.description) {
     const desc = document.createElement('div');
     desc.className = `desc-preview ${CSS_COLLAPSED}`;
@@ -101,6 +109,7 @@ function buildCard(job, idx) {
     body.appendChild(desc);
   }
 
+  // Action buttons: toggle description + delete
   const actions = document.createElement('div');
   actions.className = 'card-actions';
 
@@ -119,6 +128,7 @@ function buildCard(job, idx) {
   actions.append(toggleBtn, spacer, deleteBtn);
   card.append(header, body, actions);
 
+  // Toggle description collapse
   toggleBtn.addEventListener('click', () => {
     const desc = body.querySelector('.desc-preview');
     if (!desc) return;
@@ -126,6 +136,7 @@ function buildCard(job, idx) {
     toggleBtn.textContent = isCollapsed ? DESC_TOGGLE_SHOW : DESC_TOGGLE_HIDE;
   });
 
+  // Delete card with fade animation
   deleteBtn.addEventListener('click', async () => {
     card.classList.add('fade-out');
     setTimeout(async () => {
@@ -145,12 +156,14 @@ function buildCard(job, idx) {
   return card;
 }
 
+// Escape HTML entities
 function esc(s) {
   const div = document.createElement('div');
   div.textContent = s;
   return div.innerHTML;
 }
 
+// Re-number card indices after deletion
 function renumberCards() {
   const cards = document.querySelectorAll('.card');
   cards.forEach((c, i) => {
@@ -159,6 +172,7 @@ function renumberCards() {
   });
 }
 
+// Render all job cards
 function renderList() {
   clearCards();
   if (jobs.length === 0) {
@@ -173,37 +187,44 @@ function renderList() {
   updateStats();
 }
 
+// Remove all card DOM elements
 function clearCards() {
   for (const c of document.querySelectorAll('.card')) c.remove();
 }
 
+// Update stats + button states
 function updateStats() {
   statsCount.textContent = jobs.length;
   exportBtn.disabled = jobs.length === 0;
   clearAllBtn.disabled = jobs.length === 0;
 }
 
+// Load jobs from storage
 async function loadData() {
   jobs = await getSavedJobs();
   renderList();
 }
 
+// Delete single job from storage by hash
 async function deleteFromStorage(job) {
   const h = job._hash;
   if (!h) return;
   await removeJob(h);
 }
 
+// Delete all jobs from storage
 async function clearStorage() {
   await clearSavedJobs();
 }
 
+// Export button → download JSON
 exportBtn.addEventListener('click', () => {
   if (jobs.length === 0) return;
   const data = JSON.stringify(jobs, null, 2);
   downloadFile(data, EXPORT_FILENAME, EXPORT_MIME_TYPE);
 });
 
+// Clear all button → confirm + delete
 clearAllBtn.addEventListener('click', async () => {
   if (jobs.length === 0) return;
   if (!confirm(CONFIRM_DELETE_ALL.replace('%d', jobs.length))) return;
