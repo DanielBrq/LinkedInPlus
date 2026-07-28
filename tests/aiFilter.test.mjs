@@ -105,9 +105,9 @@ describe('parseResponse (via callGateway)', () => {
   });
 
   test('filters falsy values from technologies array', async () => {
-    sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply(JSON.stringify({ ...VALID_RESULT, technologies: ['react', null, '', 'ts', undefined, false] }))));
-    const r = await classifyWithAI('desc', 'h10', PROFILE, '', AI_CONFIG);
-    assert.deepEqual(r.technologies, ['react', 'ts']);
+    sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply(JSON.stringify({ ...VALID_RESULT, technologies: ['react', null, '', 'typescript', undefined, false] }))));
+    const r = await classifyWithAI('desc react typescript', 'h10', PROFILE, '', AI_CONFIG);
+    assert.deepEqual(r.technologies, ['react', 'typescript']);
   });
 
   test('truncates reason over 200 chars', async () => {
@@ -220,7 +220,7 @@ describe('buildUserPrompt & stripBoilerplate (via callGateway)', () => {
     const long = 'a'.repeat(5000);
     await classifyWithAI(long, 'hp2', PROFILE, '', AI_CONFIG);
     assert.ok(capturedPrompt.includes('...'), 'truncation marker should be present');
-    const descMatch = capturedPrompt.match(/Job description:\n([\s\S]*?)\n\nExtract/);
+    const descMatch = capturedPrompt.match(/Job description \(extract ALL field values from this section ONLY\):\n([\s\S]*?)\n\n/);
     assert.ok(descMatch[1].length <= 4003, 'description section should be truncated');
     sm.mock.restore();
   });
