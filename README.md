@@ -3,7 +3,7 @@
 > Chrome extension that automatically extracts, classifies, and saves LinkedIn job descriptions matching your profile — powered by AI.
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue)
-![Version](https://img.shields.io/badge/version-2.2.0-black)
+![Version](https://img.shields.io/badge/version-2.2.1-black)
 ![Chrome](https://img.shields.io/badge/chrome-≥112-4285F4?logo=google-chrome)
 
 ## Features
