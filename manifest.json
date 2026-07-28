@@ -1,9 +1,12 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn Job Description Collector",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "AI-powered LinkedIn job description collector. Extracts, classifies, and saves structured job data matching your profile.",
   "author": { "name": "Daniel Barquero", "url": "https://www.linkedin.com/in/danielbrq/" },
+  "background": {
+    "service_worker": "background.js"
+  },
   "permissions": [
     "storage"
   ],
@@ -23,7 +26,10 @@
     "https://api.fireworks.ai/*",
     "https://api.cohere.ai/*",
     "https://generativelanguage.googleapis.com/*",
-    "https://*.openai.azure.com/*"
+    "https://*.openai.azure.com/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*",
+    "http://192.168.0.5/*"
   ],
   "icons": {
     "16": "icons/icon16.png",

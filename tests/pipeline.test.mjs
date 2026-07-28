@@ -37,7 +37,11 @@ function makeContainer(description) {
   return { container: c, listitem };
 }
 
-let fetchMock, pipeline, storage, aiFilter, parser;
+function aiReply(content) {
+  return { ok: true, status: 200, data: { choices: [{ message: { content } }] }, error: null };
+}
+
+let sendMock, pipeline, storage, aiFilter, parser;
 
 describe('processContainer - early exits', () => {
   before(async () => {
@@ -51,8 +55,7 @@ describe('processContainer - early exits', () => {
   beforeEach(() => {
     aiFilter.clearAICache();
     storage.clearSavedJobs();
-    fetchMock = mock.method(globalThis, 'fetch', async () =>
-      new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(VALID_RESULT) } }] }), { status: 200 }));
+    sendMock = mock.method(chrome.runtime, 'sendMessage', (_msg, cb) => cb(aiReply(JSON.stringify(VALID_RESULT))));
   });
 
   test('null container → returns immediately', async () => {
@@ -62,7 +65,7 @@ describe('processContainer - early exits', () => {
 
   test('no description found → returns without AI call', async () => {
     let calls = 0;
-    fetchMock.mock.mockImplementation(async () => { calls++; return new Response('{}', { status: 200 }); });
+    sendMock.mock.mockImplementation((_msg, cb) => { calls++; cb(aiReply('{}')); });
     const c = { closest: () => null, querySelector: () => null };
     await pipeline.processContainer(c, CTX);
     assert.equal(calls, 0);
@@ -70,7 +73,7 @@ describe('processContainer - early exits', () => {
 
   test('negative pre-filter (#opentowork) hides without calling AI', async () => {
     let calls = 0;
-    fetchMock.mock.mockImplementation(async () => { calls++; return new Response('{}', { status: 200 }); });
+    sendMock.mock.mockImplementation((_msg, cb) => { calls++; cb(aiReply('{}')); });
     const { container, listitem } = makeContainer('#OpenToWork looking for new opportunities, 5y React dev');
     await pipeline.processContainer(container, CTX);
     assert.equal(calls, 0, 'AI should not be called for #opentowork');
@@ -79,7 +82,7 @@ describe('processContainer - early exits', () => {
 
   test('engagement bait (like this post) hides without calling AI', async () => {
     let calls = 0;
-    fetchMock.mock.mockImplementation(async () => { calls++; return new Response('{}', { status: 200 }); });
+    sendMock.mock.mockImplementation((_msg, cb) => { calls++; cb(aiReply('{}')); });
     const { container, listitem } = makeContainer('Like this post if you agree! comment below with your thoughts');
     await pipeline.processContainer(container, CTX);
     assert.equal(calls, 0);
@@ -88,7 +91,7 @@ describe('processContainer - early exits', () => {
 
   test('description shorter than MIN_DESCRIPTION_LENGTH (100) hides without calling AI', async () => {
     let calls = 0;
-    fetchMock.mock.mockImplementation(async () => { calls++; return new Response('{}', { status: 200 }); });
+    sendMock.mock.mockImplementation((_msg, cb) => { calls++; cb(aiReply('{}')); });
     const { container, listitem } = makeContainer('short text only fifty chars here');
     await pipeline.processContainer(container, CTX);
     assert.equal(calls, 0);
@@ -108,8 +111,7 @@ describe('processContainer - AI flow', () => {
     aiFilter.clearAICache();
     storage.clearSavedJobs();
     pipeline.clearProcessedHashes();
-    fetchMock = mock.method(globalThis, 'fetch', async () =>
-      new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(VALID_RESULT) } }] }), { status: 200 }));
+    sendMock = mock.method(chrome.runtime, 'sendMessage', (_msg, cb) => cb(aiReply(JSON.stringify(VALID_RESULT))));
   });
 
   test('relevant match → saves job and applies green outline', async () => {
@@ -124,8 +126,7 @@ describe('processContainer - AI flow', () => {
 
   test('non-relevant match → hides post and does not save', async () => {
     const NONREL = { ...VALID_RESULT, relevant: false, fitScore: 10 };
-    fetchMock.mock.mockImplementation(async () =>
-      new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(NONREL) } }] }), { status: 200 }));
+    sendMock.mock.mockImplementation((_msg, cb) => cb(aiReply(JSON.stringify(NONREL))));
     const { container, listitem } = makeContainer('a'.repeat(150) + ' Some irrelevant post content here.');
     await pipeline.processContainer(container, CTX);
     const saved = await storage.getSavedJobs();
@@ -134,7 +135,7 @@ describe('processContainer - AI flow', () => {
   });
 
   test('AI unavailable → post is left visible and nothing is saved', async () => {
-    fetchMock.mock.mockImplementation(async () => new Response('bad gateway', { status: 502 }));
+    sendMock.mock.mockImplementation((_msg, cb) => cb({ ok: false, status: 502, data: null, error: 'bad gateway' }));
     const { container, listitem } = makeContainer('a'.repeat(150) + ' Some content that would normally be processed.');
     await pipeline.processContainer(container, CTX);
     assert.equal(listitem.style.display, undefined, 'post should remain visible');
@@ -144,7 +145,7 @@ describe('processContainer - AI flow', () => {
 
   test('session dedup → second call for same description skips AI and storage', async () => {
     let calls = 0;
-    fetchMock.mock.mockImplementation(async () => { calls++; return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(VALID_RESULT) } }] }), { status: 200 }); });
+    sendMock.mock.mockImplementation((_msg, cb) => { calls++; cb(aiReply(JSON.stringify(VALID_RESULT))); });
     const longDesc = 'a'.repeat(150) + ' dedup test job description content.';
     const { container } = makeContainer(longDesc);
     await pipeline.processContainer(container, CTX);
@@ -156,7 +157,7 @@ describe('processContainer - AI flow', () => {
 
   test('storage dedup → already-saved job is not re-classified', async () => {
     let calls = 0;
-    fetchMock.mock.mockImplementation(async () => { calls++; return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify(VALID_RESULT) } }] }), { status: 200 }); });
+    sendMock.mock.mockImplementation((_msg, cb) => { calls++; cb(aiReply(JSON.stringify(VALID_RESULT))); });
     pipeline.clearProcessedHashes();
     const longDesc = 'a'.repeat(150) + ' storage dedup test job content.';
     const { container } = makeContainer(longDesc);
