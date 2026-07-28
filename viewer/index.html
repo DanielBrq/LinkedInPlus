@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Job Viewer — AI Matches</title>
+  <link rel="stylesheet" href="../theme.css">
+</head>
+<body class="viewer-body">
+<div class="container">
+  <header>
+    <div class="header-left">
+      <h1>Job Matches</h1>
+    </div>
+    <div class="stats">
+      <span class="stats-number" id="statsCount">0</span> matches
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <button class="primary" id="exportBtn" disabled>Download JSON</button>
+    <button class="danger" id="clearAllBtn" disabled>Clear All</button>
+  </div>
+
+  <div id="listContainer">
+    <div class="empty-state" id="emptyState">
+      <strong>No matches yet</strong>
+      Enable the collector on LinkedIn and let AI find matching jobs for you.
+    </div>
+  </div>
+</div>
+
+<script type="module" src="viewer.js"></script>
+</body>
+</html>
