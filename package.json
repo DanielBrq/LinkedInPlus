@@ -1,6 +1,6 @@
 {
   "name": "linkedin-job-collector",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "AI-powered Chrome extension that extracts, classifies, and saves LinkedIn job descriptions matching your profile",
   "keywords": [
     "chrome-extension",
