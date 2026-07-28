@@ -21,6 +21,6 @@ export function installChromeMock(initial = {}) {
       if (cb) cb();
     },
   };
-  globalThis.chrome = { storage: { local: store }, runtime: { id: 'test-runtime-id' } };
+  globalThis.chrome = { storage: { local: store }, runtime: { id: 'test-runtime-id', sendMessage: () => {} } };
   return data;
 }
