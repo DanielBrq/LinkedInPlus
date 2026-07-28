@@ -1,4 +1,19 @@
 {
-  "name": "linkedin-scrap",
-  "private": true
+  "name": "linkedin-job-collector",
+  "version": "2.0.0",
+  "description": "AI-powered Chrome extension that extracts, classifies, and saves LinkedIn job descriptions matching your profile",
+  "keywords": [
+    "chrome-extension",
+    "linkedin",
+    "job-search",
+    "ai",
+    "job-scraper",
+    "career"
+  ],
+  "author": "",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "node --test --experimental-test-module-mocks tests/*.test.mjs"
+  }
 }
