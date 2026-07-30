@@ -17,3 +17,4 @@ jobs:
       - run: corepack enable
       - run: pnpm install
       - run: npx eslint .
+      - run: npx node --test tests/*.test.mjs

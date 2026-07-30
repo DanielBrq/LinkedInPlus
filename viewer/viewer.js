@@ -156,6 +156,7 @@ function buildCard(job, idx) {
   deleteBtn.addEventListener('click', async () => {
     card.classList.add('fade-out');
     setTimeout(async () => {
+      if (job.locked) { card.classList.remove('fade-out'); return; }
       const i = Array.from(card.parentNode.children).indexOf(card);
       if (i === -1) return;
       jobs.splice(i, 1);

@@ -63,19 +63,19 @@ describe('parseResponse (via callGateway)', () => {
   test('returns AI_UNAVAILABLE_RESULT when relevant field is missing', async () => {
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply(JSON.stringify({ fitScore: 50, title: 'No relevant field' }))));
     const r = await classifyWithAI('desc', 'h4', PROFILE, '', AI_CONFIG);
-    assert.equal(r.reason, 'ai-unavailable');
+    assert.equal(r.reason, 'ai-failed');
   });
 
   test('returns AI_UNAVAILABLE_RESULT when relevant is not boolean', async () => {
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply(JSON.stringify({ relevant: 'true' }))));
     const r = await classifyWithAI('desc', 'h5', PROFILE, '', AI_CONFIG);
-    assert.equal(r.reason, 'ai-unavailable');
+    assert.equal(r.reason, 'ai-failed');
   });
 
   test('returns AI_UNAVAILABLE_RESULT on malformed JSON', async () => {
     sendMock.mock.mockImplementation((_msg, cb) => cb(mockReply('not json at all { broken')));
     const r = await classifyWithAI('desc', 'h6', PROFILE, '', AI_CONFIG);
-    assert.equal(r.reason, 'ai-unavailable');
+    assert.equal(r.reason, 'ai-failed');
   });
 
   test('clamps fitScore below 0 to 0', async () => {

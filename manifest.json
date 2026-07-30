@@ -29,8 +29,7 @@
     "https://generativelanguage.googleapis.com/*",
     "https://*.openai.azure.com/*",
     "http://localhost/*",
-    "http://127.0.0.1/*",
-    "http://192.168.0.5/*"
+    "http://127.0.0.1/*"
   ],
   "icons": {
     "16": "icons/icon16.png",

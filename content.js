@@ -1,5 +1,4 @@
-const INJECTED_STYLES_TMPL = '.lc-fadeout{animation:lc-fade .4s ease forwards}@keyframes lc-fade{to{opacity:0;transform:scale(.97)}}.lc-rejected{outline:2px solid #d32f2f!important;outline-offset:-2px}.lc-pending{outline:2px solid #1976d2!important;outline-offset:-2px;position:relative}.lc-pending::after{content:"__TEXT__";position:absolute;top:6px;right:6px;background:#1976d2;color:#fff;font:600 10px/1 -apple-system,BlinkMacSystemFont,sans-serif;padding:3px 7px;border-radius:10px;z-index:9;pointer-events:none;letter-spacing:.02em}';
-const DESCRIPTION_SELECTOR = '[data-testid="expandable-text-box"]';
+const INJECTED_STYLES_TMPL = '.lc-fadeout{animation:lc-fade .4s ease forwards}@keyframes lc-fade{to{opacity:0;transform:scale(.97)}}.lc-rejected{outline:2px solid #d32f2f!important;outline-offset:-2px;z-index:1}.lc-matched{outline:2px solid #0a8754!important;outline-offset:-2px}.lc-hidden{display:none!important}.lc-pending{outline:2px solid #1976d2!important;outline-offset:-2px;position:relative}.lc-pending::after{content:"__TEXT__";position:absolute;top:6px;right:6px;background:#1976d2;color:#fff;font:600 10px/1 -apple-system,BlinkMacSystemFont,sans-serif;padding:3px 7px;border-radius:10px;z-index:9;pointer-events:none;letter-spacing:.02em}';
 const LOG_PREFIX = '[LinkedIn Collector]';
 
 // Init: load modules, inject styles, observe DOM
@@ -16,9 +15,10 @@ const LOG_PREFIX = '[LinkedIn Collector]';
     const observerUrl = chrome.runtime.getURL('lib/observer.js');
     const constantsUrl = chrome.runtime.getURL('lib/constants.js');
     const mediaBlockerUrl = chrome.runtime.getURL('lib/mediaBlocker.js');
+    const parserUrl = chrome.runtime.getURL('lib/parser.js');
 
-    const [pipeModule, settingsModule, observerModule, constantsModule, mediaBlockerModule] = await Promise.all([
-      import(pipeUrl), import(settingsUrl), import(observerUrl), import(constantsUrl), import(mediaBlockerUrl)
+    const [pipeModule, settingsModule, observerModule, constantsModule, mediaBlockerModule, parserModule] = await Promise.all([
+      import(pipeUrl), import(settingsUrl), import(observerUrl), import(constantsUrl), import(mediaBlockerUrl), import(parserUrl)
     ]);
 
     processContainer = pipeModule.processContainer;
@@ -33,6 +33,7 @@ const LOG_PREFIX = '[LinkedIn Collector]';
     getBlockMediaEnabled = settingsModule.getBlockMediaEnabled;
     createObserver = observerModule.createObserver;
     INITIAL_SCAN_DELAY_MS = constantsModule.INITIAL_SCAN_DELAY_MS;
+    const DESCRIPTION_SELECTOR = parserModule.DESCRIPTION_SELECTOR;
     enableMediaBlocking = mediaBlockerModule.enableMediaBlocking;
     disableMediaBlocking = mediaBlockerModule.disableMediaBlocking;
   } catch (err) {
@@ -45,7 +46,7 @@ const LOG_PREFIX = '[LinkedIn Collector]';
   const analyzingText = lang === 'es' ? 'Analizando…' : 'Analyzing…';
   const style = document.createElement('style');
   style.textContent = INJECTED_STYLES_TMPL.replace('__TEXT__', analyzingText);
-  document.head.appendChild(style);
+  (document.head || document.documentElement).appendChild(style);
 
   // Read initial config from storage
   let enabled = await getEnabled();
@@ -74,8 +75,7 @@ const LOG_PREFIX = '[LinkedIn Collector]';
   }
 
   // Listen for config changes from popup
-  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.onChanged) {
-    chrome.storage.onChanged.addListener(async (changes, namespace) => {
+  chrome.storage.onChanged.addListener(async (changes, namespace) => {
       if (namespace !== 'local') return;
       // AI preset changed → re-scan
       if (changes.ai_active_preset || changes.ai_presets) {
@@ -121,5 +121,4 @@ const LOG_PREFIX = '[LinkedIn Collector]';
         }
       }
     });
-  }
 })();

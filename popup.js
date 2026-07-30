@@ -39,9 +39,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Show saved job count
   /** @returns {Promise<Object[]>} */
   async function updateJobCount() {
-    const jobs = await getSavedJobs();
-    jobCountEl.textContent = `${jobs.length} saved`;
-    return jobs;
+    try {
+      const jobs = await getSavedJobs();
+      jobCountEl.textContent = `${jobs.length} saved`;
+      return jobs;
+    } catch (e) {
+      jobCountEl.textContent = '0 saved';
+      return [];
+    }
   }
 
   // Update status dot + text
@@ -122,22 +127,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   notInterestedToggle.checked = await getNotInterestedEnabled();
 
   saveMatchesToggle.addEventListener('change', () => {
-    saveSaveMatchesEnabled(saveMatchesToggle.checked);
+    saveSaveMatchesEnabled(saveMatchesToggle.checked).catch(e => console.error('saveMatchesToggle', e));
   });
   hideNonRelevantToggle.addEventListener('change', () => {
-    saveHideNonRelevantEnabled(hideNonRelevantToggle.checked);
+    saveHideNonRelevantEnabled(hideNonRelevantToggle.checked).catch(e => console.error('hideNonRelevantToggle', e));
   });
   notInterestedToggle.addEventListener('change', () => {
-    saveNotInterestedEnabled(notInterestedToggle.checked);
+    saveNotInterestedEnabled(notInterestedToggle.checked).catch(e => console.error('notInterestedToggle', e));
   });
   blockMediaToggle.checked = await getBlockMediaEnabled();
   blockMediaToggle.addEventListener('change', () => {
-    saveBlockMediaEnabled(blockMediaToggle.checked);
+    saveBlockMediaEnabled(blockMediaToggle.checked).catch(e => console.error('blockMediaToggle', e));
   });
 
   // Master enable/disable toggle
   enableToggle.addEventListener('change', () => {
-    saveEnabled(enableToggle.checked);
+    saveEnabled(enableToggle.checked).catch(e => console.error('enableToggle', e));
     updateStatus(enableToggle.checked);
   });
 
@@ -148,9 +153,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Clear all saved jobs
   clearJobsBtn.addEventListener('click', async () => {
-    if (confirm(CONFIRM_CLEAR)) {
-      await clearSavedJobs();
-      await updateJobCount();
-    }
+    try {
+      if (confirm(CONFIRM_CLEAR)) {
+        await clearSavedJobs();
+        await updateJobCount();
+      }
+    } catch (e) { console.error('clearJobs', e); }
   });
 });

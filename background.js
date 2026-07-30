@@ -9,21 +9,37 @@ const MEDIA_RULE = {
   },
 };
 
+// Read API key from storage so content script never has it
+async function getApiKey() {
+  const { ai_active_preset, ai_presets } = await chrome.storage.local.get(['ai_active_preset', 'ai_presets']);
+  if (!ai_presets || !ai_active_preset) return '';
+  const preset = ai_presets[ai_active_preset];
+  return preset?.apiKey || '';
+}
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'AI_FETCH') {
     (async () => {
       try {
+        const apiKey = await getApiKey();
+        const headers = {
+          'Content-Type': 'application/json',
+        };
+        if (apiKey) headers['Authorization'] = 'Bearer ' + apiKey;
+
         const controller = new AbortController();
         const timer = setTimeout(() => controller.abort(), message.timeout || 30000);
         const res = await fetch(message.url, {
           method: 'POST',
-          headers: message.headers,
+          headers,
           body: JSON.stringify(message.body),
           signal: controller.signal,
         });
         clearTimeout(timer);
         const data = await res.json().catch(() => null);
-        sendResponse({ ok: res.ok, status: res.status, data, error: data ? null : 'Invalid JSON response' });
+        // H9: validate response structure before forwarding
+        const valid = data && typeof data === 'object' && Array.isArray(data?.choices) && data.choices.length > 0;
+        sendResponse({ ok: res.ok, status: res.status, data: valid ? data : null, error: data ? null : 'Invalid JSON response' });
       } catch (err) {
         sendResponse({ ok: false, status: 0, data: null, error: err.message });
       }

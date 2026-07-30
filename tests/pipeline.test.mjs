@@ -19,7 +19,8 @@ const CTX = {
 const NEG_POST = '[role="listitem"]';
 
 function makeContainer(description) {
-  const listitem = { classList: { add: () => {}, remove: () => {} }, style: {}, closest: () => null };
+  const classList = { add: () => {}, remove: () => {}, contains: () => true };
+  const listitem = { classList, style: {}, closest: () => null };
   const descEl = {
     innerText: description,
     textContent: description,
@@ -120,7 +121,7 @@ describe('processContainer - AI flow', () => {
     await pipeline.processContainer(container, CTX);
     const saved = await storage.getSavedJobs();
     assert.equal(saved.length, 1);
-    assert.ok(listitem.style.outline, 'relevant post should be outlined');
+    assert.ok(listitem.classList.contains('lc-matched'), 'relevant post should be outlined');
   });
 
   test('non-relevant match → hides post and does not save', async () => {
@@ -183,6 +184,6 @@ describe('processContainer - AI flow', () => {
     await pipeline.processContainer(container, ctxNeg);
     const saved = await storage.getSavedJobs();
     assert.equal(saved.length, 1, 'job without negative tech should be saved');
-    assert.ok(listitem.style.outline, 'relevant post should be outlined');
+    assert.ok(listitem.classList.contains('lc-matched'), 'relevant post should be outlined');
   });
 });

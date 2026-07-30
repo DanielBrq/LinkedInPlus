@@ -1,5 +1,7 @@
 // In-memory mock of chrome.storage.local (callback-based API).
 // Usage: installChromeMock({ 'key': value }) before importing the module under test.
+const _origChrome = globalThis.chrome;
+
 export function installChromeMock(initial = {}) {
   const data = { ...initial };
   const store = {
@@ -23,4 +25,9 @@ export function installChromeMock(initial = {}) {
   };
   globalThis.chrome = { storage: { local: store }, runtime: { id: 'test-runtime-id', sendMessage: () => {} } };
   return data;
+}
+
+export function restoreChromeMock() {
+  if (_origChrome) globalThis.chrome = _origChrome;
+  else delete globalThis.chrome;
 }
