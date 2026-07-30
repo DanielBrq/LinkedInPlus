@@ -1,4 +1,4 @@
-const INJECTED_STYLES = '.lc-fadeout{animation:lc-fade .4s ease forwards}@keyframes lc-fade{to{opacity:0;transform:scale(.97)}}.lc-rejected{outline:2px solid #d32f2f!important;outline-offset:-2px}.lc-pending{outline:2px solid #1976d2!important;outline-offset:-2px;position:relative}.lc-pending::after{content:"AI analyzing…";position:absolute;top:6px;right:6px;background:#1976d2;color:#fff;font:600 10px/1 -apple-system,BlinkMacSystemFont,sans-serif;padding:3px 7px;border-radius:10px;z-index:9;pointer-events:none;letter-spacing:.02em}';
+const INJECTED_STYLES_TMPL = '.lc-fadeout{animation:lc-fade .4s ease forwards}@keyframes lc-fade{to{opacity:0;transform:scale(.97)}}.lc-rejected{outline:2px solid #d32f2f!important;outline-offset:-2px}.lc-pending{outline:2px solid #1976d2!important;outline-offset:-2px;position:relative}.lc-pending::after{content:"__TEXT__";position:absolute;top:6px;right:6px;background:#1976d2;color:#fff;font:600 10px/1 -apple-system,BlinkMacSystemFont,sans-serif;padding:3px 7px;border-radius:10px;z-index:9;pointer-events:none;letter-spacing:.02em}';
 const DESCRIPTION_SELECTOR = '[data-testid="expandable-text-box"]';
 const LOG_PREFIX = '[LinkedIn Collector]';
 
@@ -41,8 +41,10 @@ const LOG_PREFIX = '[LinkedIn Collector]';
   }
 
   // Inject CSS for visual feedback (rejected, pending, fadeout)
+  const lang = (document.documentElement.lang || 'en').startsWith('es') ? 'es' : 'en';
+  const analyzingText = lang === 'es' ? 'Analizando…' : 'Analyzing…';
   const style = document.createElement('style');
-  style.textContent = INJECTED_STYLES;
+  style.textContent = INJECTED_STYLES_TMPL.replace('__TEXT__', analyzingText);
   document.head.appendChild(style);
 
   // Read initial config from storage

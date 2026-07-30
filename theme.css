@@ -539,6 +539,10 @@ button:disabled {
   overflow: hidden;
 }
 
+.card.locked {
+  border-left: 3px solid var(--primary);
+}
+
 .card-header {
   display: flex;
   justify-content: space-between;

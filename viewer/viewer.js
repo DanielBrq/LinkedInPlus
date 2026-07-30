@@ -1,4 +1,4 @@
-import { getSavedJobs, clearSavedJobs, removeJob } from '../lib/storage.js';
+import { getSavedJobs, clearSavedJobs, removeJob, updateJobLock } from '../lib/storage.js';
 import { downloadFile, esc } from '../lib/utils.js';
 import {
   CSS_COLLAPSED, DESC_COLLAPSE_AT, FIT_HIGH, FIT_MID,
@@ -8,7 +8,6 @@ import {
 
 const DESC_TOGGLE_SHOW = 'Show description';
 const DESC_TOGGLE_HIDE = 'Hide description';
-const CONFIRM_DELETE_ALL = 'Delete all %d job matches?';
 
 const exportBtn = document.getElementById('exportBtn');
 const clearAllBtn = document.getElementById('clearAllBtn');
@@ -109,7 +108,7 @@ function buildCard(job, idx) {
     body.appendChild(desc);
   }
 
-  // Action buttons: toggle description + delete
+  // Action buttons: toggle description, lock/unlock, delete
   const actions = document.createElement('div');
   actions.className = 'card-actions';
 
@@ -118,14 +117,21 @@ function buildCard(job, idx) {
   toggleBtn.textContent = DESC_TOGGLE_SHOW;
   if (!job.description || job.description.length <= DESC_COLLAPSE_AT) toggleBtn.style.display = 'none';
 
+  const lockBtn = document.createElement('button');
+  lockBtn.className = 'secondary';
+  lockBtn.textContent = job.locked ? 'Unlock' : 'Lock';
+  lockBtn.title = job.locked ? 'Unlock — allows deletion' : 'Lock — protects from deletion when clearing jobs';
+
   const spacer = document.createElement('span');
   spacer.className = 'flex-spacer';
 
   const deleteBtn = document.createElement('button');
   deleteBtn.className = 'danger';
   deleteBtn.textContent = 'Delete';
+  if (job.locked) deleteBtn.disabled = true;
 
-  actions.append(toggleBtn, spacer, deleteBtn);
+  actions.append(toggleBtn, lockBtn, spacer, deleteBtn);
+  if (job.locked) card.classList.add('locked');
   card.append(header, body, actions);
 
   // Toggle description collapse
@@ -134,6 +140,16 @@ function buildCard(job, idx) {
     if (!desc) return;
     const isCollapsed = desc.classList.toggle(CSS_COLLAPSED);
     toggleBtn.textContent = isCollapsed ? DESC_TOGGLE_SHOW : DESC_TOGGLE_HIDE;
+  });
+
+  // Lock/unlock toggle
+  lockBtn.addEventListener('click', async () => {
+    job.locked = !job.locked;
+    await updateJobLock(job._hash, job.locked);
+    card.classList.toggle('locked', job.locked);
+    lockBtn.textContent = job.locked ? 'Unlock' : 'Lock';
+    lockBtn.title = job.locked ? 'Unlock — allows deletion' : 'Lock — protects from deletion when clearing jobs';
+    deleteBtn.disabled = job.locked;
   });
 
   // Delete card with fade animation
@@ -206,11 +222,6 @@ async function deleteFromStorage(job) {
   await removeJob(h);
 }
 
-// Delete all jobs from storage
-async function clearStorage() {
-  await clearSavedJobs();
-}
-
 // Export button → download JSON
 exportBtn.addEventListener('click', () => {
   if (jobs.length === 0) return;
@@ -218,13 +229,14 @@ exportBtn.addEventListener('click', () => {
   downloadFile(data, EXPORT_FILENAME, EXPORT_MIME_TYPE);
 });
 
-// Clear all button → confirm + delete
+// Clear all button → confirm (locked excluded) + delete
 clearAllBtn.addEventListener('click', async () => {
-  if (jobs.length === 0) return;
-  if (!confirm(CONFIRM_DELETE_ALL.replace('%d', jobs.length))) return;
-  jobs = [];
-  await clearStorage();
-  renderList();
+  const lockedCount = jobs.filter(j => j.locked).length;
+  const toDelete = jobs.length - lockedCount;
+  if (toDelete === 0) return alert('No unlocked jobs to clear.');
+  if (!confirm(`Delete ${toDelete} of ${jobs.length} job matches? ${lockedCount} locked will be kept.`)) return;
+  await clearSavedJobs();
+  await loadData();
 });
 
 loadData();

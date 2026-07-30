@@ -1,7 +1,7 @@
 import { test, describe, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { installChromeMock } from './helpers/mock-chrome.mjs';
-import { saveJob, hasJob, getSavedJobs, removeJob, clearSavedJobs } from '../lib/storage.js';
+import { saveJob, hasJob, getSavedJobs, removeJob, clearSavedJobs, updateJobLock } from '../lib/storage.js';
 import { hashText } from '../lib/utils.js';
 
 const SAMPLE = {
@@ -65,6 +65,31 @@ describe('storage', () => {
     await clearSavedJobs();
     const all = await getSavedJobs();
     assert.equal(all.length, 0);
+  });
+
+  test('removeJob skips locked jobs', async () => {
+    const { hash } = await saveJob(SAMPLE);
+    await updateJobLock(hash, true);
+    await removeJob(hash);
+    assert.equal(await hasJob(hash), true, 'locked job should survive removeJob');
+  });
+
+  test('clearSavedJobs preserves locked jobs', async () => {
+    const { hash: h1 } = await saveJob({ ...SAMPLE, description: 'locked one' });
+    const { hash: h2 } = await saveJob({ ...SAMPLE, description: 'unlocked one' });
+    await updateJobLock(h1, true);
+    await clearSavedJobs();
+    const all = await getSavedJobs();
+    assert.equal(all.length, 1);
+    assert.equal(all[0].description, 'locked one');
+  });
+
+  test('updateJobLock toggles locked state in storage', async () => {
+    const { hash } = await saveJob(SAMPLE);
+    await updateJobLock(hash, true);
+    assert.equal((await getSavedJobs())[0].locked, true);
+    await updateJobLock(hash, false);
+    assert.equal((await getSavedJobs())[0].locked, false);
   });
 
   test('hashText is deterministic and produces 64-char hex (SHA-256)', async () => {

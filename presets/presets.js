@@ -133,7 +133,7 @@ function buildEditor(name, preset) {
     { key: 'model', label: 'Model', value: preset.model || '', type: 'text', placeholder: DEFAULT_PRESET_CONFIG.model },
     { key: 'filters', label: 'Filters', value: preset.filters || '', type: 'textarea', placeholder: 'Senior developer, remote, fintech...' },
     { key: 'negativeFilters', label: 'Negative Filters', value: preset.negativeFilters || '', type: 'textarea', placeholder: 'No Java, no agencies...' },
-    { key: 'locationFilter', label: 'Location Filter (regex)', value: preset.locationFilter || '', type: 'text', placeholder: '(?i)costa.rica|san.josé' },
+    { key: 'locationFilter', label: 'Location Filter', value: preset.locationFilter || '', type: 'text', placeholder: 'Costa Rica, Latam, Argentina, Honduras' },
   ];
 
   for (const f of fields) {

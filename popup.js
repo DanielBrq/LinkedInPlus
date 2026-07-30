@@ -98,6 +98,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   await updateJobCount();
 
+  // Update count reactively when jobs are saved/cleared from content script
+  chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local' && changes.jobs_index) updateJobCount();
+  });
+
   // Debounced save for display config
   let displayDebounceTimer;
   /** @returns {void} */
