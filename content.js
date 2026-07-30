@@ -6,7 +6,7 @@ const LOG_PREFIX = '[LinkedIn Collector]';
   let processContainer, clearProcessedHashes, MSG_CONFIG_UPDATED;
   let getEnabled, getActivePresetConfig, getDisplayConfig, getNotInterestedEnabled, getSaveMatchesEnabled, getHideNonRelevantEnabled, getBlockMediaEnabled;
   let createObserver, INITIAL_SCAN_DELAY_MS;
-  let enableMediaBlocking, disableMediaBlocking;
+  let DESCRIPTION_SELECTOR, enableMediaBlocking, disableMediaBlocking;
 
   // Dynamic imports of lib modules
   try {
@@ -33,7 +33,7 @@ const LOG_PREFIX = '[LinkedIn Collector]';
     getBlockMediaEnabled = settingsModule.getBlockMediaEnabled;
     createObserver = observerModule.createObserver;
     INITIAL_SCAN_DELAY_MS = constantsModule.INITIAL_SCAN_DELAY_MS;
-    const DESCRIPTION_SELECTOR = parserModule.DESCRIPTION_SELECTOR;
+    DESCRIPTION_SELECTOR = parserModule.DESCRIPTION_SELECTOR;
     enableMediaBlocking = mediaBlockerModule.enableMediaBlocking;
     disableMediaBlocking = mediaBlockerModule.disableMediaBlocking;
   } catch (err) {

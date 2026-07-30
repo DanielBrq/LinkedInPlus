@@ -211,17 +211,18 @@ describe('buildUserPrompt & stripBoilerplate (via callGateway)', () => {
     sm.mock.restore();
   });
 
-  test('truncates descriptions longer than MAX_DESCRIPTION_CHARS (4000)', async () => {
+  test('truncates descriptions longer than MAX_DESCRIPTION_CHARS (6000)', async () => {
     let capturedPrompt = null;
     const sm = mock.method(chrome.runtime, 'sendMessage', (msg, cb) => {
       capturedPrompt = msg.body.messages[1].content;
       cb(mockReply(JSON.stringify(VALID_RESULT)));
     });
-    const long = 'a'.repeat(5000);
+    const long = 'a'.repeat(7000);
     await classifyWithAI(long, 'hp2', PROFILE, '', AI_CONFIG);
-    assert.ok(capturedPrompt.includes('...'), 'truncation marker should be present');
+    assert.ok(capturedPrompt.includes('...[truncated]...'), 'truncation marker should be present');
     const descMatch = capturedPrompt.match(/Job description \(extract ALL field values from this section ONLY\):\n([\s\S]*?)\n\n/);
-    assert.ok(descMatch[1].length <= 4003, 'description section should be truncated');
+    assert.ok(descMatch[1].length < 7000, 'description section should be truncated');
+    assert.ok(descMatch[1].length > 4000, 'description section should keep head+tail');
     sm.mock.restore();
   });
 });

@@ -167,14 +167,15 @@ describe('processContainer - AI flow', () => {
     assert.equal(calls, 1, 'AI should not be called again for an already-saved job');
   });
 
-  test('negative filter → description contains excluded tech → forced irrelevant', async () => {
+  test('negative filter → description contains excluded tech → penalizes fitScore but still saves', async () => {
     const ctxNeg = { ...CTX, aiConfig: { ...CTX.aiConfig, negativeFilters: 'Python, Java' } };
     const longDesc = 'a'.repeat(150) + ' Senior Python developer at Acme. Build with Django and PostgreSQL.';
     const { container, listitem } = makeContainer(longDesc);
     await pipeline.processContainer(container, ctxNeg);
     const saved = await storage.getSavedJobs();
-    assert.equal(saved.length, 0, 'job with negative tech should not be saved');
-    assert.equal(listitem.style.display, 'none', 'post with negative tech should be hidden');
+    assert.equal(saved.length, 1, 'job with negative tech should still be saved (fitScore 88-20=68)');
+    assert.equal(saved[0].fitScore, 68, 'fitScore should be penalized by -20');
+    assert.ok(listitem.classList.contains('lc-matched'), 'post with negative tech should be visible (matched)');
   });
 
   test('negative filter → description does NOT contain excluded tech → saved normally', async () => {
