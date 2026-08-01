@@ -3,7 +3,7 @@ const LOG_PREFIX = '[LinkedIn Collector]';
 
 // Init: load modules, inject styles, observe DOM
 (async function initContentScript() {
-  let processContainer, clearProcessedHashes, MSG_CONFIG_UPDATED;
+  let processContainer, clearProcessedHashes, stopProcessing, MSG_CONFIG_UPDATED;
   let getEnabled, getActivePresetConfig, getDisplayConfig, getNotInterestedEnabled, getSaveMatchesEnabled, getHideNonRelevantEnabled, getBlockMediaEnabled;
   let createObserver, INITIAL_SCAN_DELAY_MS;
   let DESCRIPTION_SELECTOR, enableMediaBlocking, disableMediaBlocking;
@@ -23,6 +23,7 @@ const LOG_PREFIX = '[LinkedIn Collector]';
 
     processContainer = pipeModule.processContainer;
     clearProcessedHashes = pipeModule.clearProcessedHashes;
+    stopProcessing = pipeModule.stopProcessing;
     MSG_CONFIG_UPDATED = pipeModule.MSG_CONFIG_UPDATED;
     getEnabled = settingsModule.getEnabled;
     getActivePresetConfig = settingsModule.getActivePresetConfig;
@@ -112,11 +113,13 @@ const LOG_PREFIX = '[LinkedIn Collector]';
         if (enabled) {
           aiConfig = await getActivePresetConfig();
           displayConfig = await getDisplayConfig();
+          clearProcessedHashes();
           obs.scan();
           obs.start();
           console.log(LOG_PREFIX, 'Enabled via config change.');
         } else {
           obs.stop();
+          stopProcessing();
           console.log(LOG_PREFIX, 'Disabled via config change.');
         }
       }
