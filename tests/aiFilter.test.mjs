@@ -190,6 +190,30 @@ describe('classifyWithAI - cache & fallback', () => {
     assert.equal(calls, 2);
     sm.mock.restore();
   });
+
+  test('clearAICache settles queued jobs so awaiters do not hang', async () => {
+    let release;
+    const gate = new Promise(r => { release = r; });
+    const sm = mock.method(chrome.runtime, 'sendMessage', (_msg, cb) => {
+      gate.then(() => cb(mockReply(JSON.stringify(VALID_RESULT))));
+    });
+    const p1 = classifyWithAI('desc one', 'h-hang1', PROFILE, '', AI_CONFIG);
+    const p2 = classifyWithAI('desc two', 'h-hang2', PROFILE, '', AI_CONFIG);
+    const p3 = classifyWithAI('desc three', 'h-hang3', PROFILE, '', AI_CONFIG);
+    await new Promise(r => setTimeout(r, 5));
+    clearAICache();
+    release();
+    const settled = await Promise.race([
+      Promise.allSettled([p1, p2, p3]),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('awaiters hung after clearAICache')), 1000)),
+    ]);
+    assert.equal(settled.length, 3);
+    assert.equal(settled[1].status, 'fulfilled');
+    assert.equal(settled[1].value.reason, 'ai-failed');
+    assert.equal(settled[2].status, 'fulfilled');
+    assert.equal(settled[2].value.reason, 'ai-failed');
+    sm.mock.restore();
+  });
 });
 
 describe('buildUserPrompt & stripBoilerplate (via callGateway)', () => {
