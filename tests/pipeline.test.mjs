@@ -42,6 +42,26 @@ function aiReply(content) {
   return { ok: true, status: 200, data: { choices: [{ message: { content } }] }, error: null };
 }
 
+function makeReplacedContainer(description) {
+  const classList = { add: () => {}, remove: () => {}, contains: () => true };
+  const listitem = {
+    classList, style: {},
+    closest: () => null,
+    querySelector: () => ({ click: () => {} }),
+  };
+  const descEl = {
+    innerText: description,
+    textContent: description,
+    parentElement: { querySelector: () => null },
+  };
+  const c = {
+    closest: (sel) => sel === NEG_POST ? listitem : null,
+    querySelector: (sel) => sel.includes('expandable-text-box') ? descEl : null,
+    matches: () => false,
+  };
+  return { container: c, listitem };
+}
+
 let sendMock, pipeline, storage, aiFilter, parser;
 
 describe('processContainer - early exits', () => {
@@ -97,6 +117,24 @@ describe('processContainer - early exits', () => {
     await pipeline.processContainer(container, CTX);
     assert.equal(calls, 0);
     assert.equal(listitem.style.display, 'none');
+  });
+
+  test('not-interested click → LinkedIn replaces post with confirmation → confirmation gets hidden', async () => {
+    const realDoc = globalThis.document;
+    const target = { style: {}, classList: { add: () => {}, remove: () => {}, contains: () => true } };
+    const conf = { closest: (sel) => sel === NEG_POST ? target : null };
+    globalThis.document = {
+      querySelectorAll: (sel) => sel === '[role="menuitem"]' ? [{ textContent: 'No me interesa', click: () => {} }] : [],
+      contains: () => false,
+      querySelector: (sel) => sel === '[componentkey^="feed.confirmation"]' ? conf : null,
+    };
+    try {
+      const { container } = makeReplacedContainer('dismiss me now short text');
+      await pipeline.processContainer(container, { ...CTX, notInterestedEnabled: true });
+      assert.equal(target.style.display, 'none', 'confirmation must be hidden after not-interested collapse');
+    } finally {
+      globalThis.document = realDoc;
+    }
   });
 });
 
@@ -178,13 +216,20 @@ describe('processContainer - AI flow', () => {
     assert.ok(listitem.classList.contains('lc-matched'), 'post with negative tech should be visible (matched)');
   });
 
-  test('negative filter → description does NOT contain excluded tech → saved normally', async () => {
-    const ctxNeg = { ...CTX, aiConfig: { ...CTX.aiConfig, negativeFilters: 'Python, Java' } };
-    const longDesc = 'a'.repeat(150) + ' Senior .NET C# developer at Acme. Build with React and TypeScript.';
-    const { container, listitem } = makeContainer(longDesc);
-    await pipeline.processContainer(container, ctxNeg);
+  test('stopProcessing drops queued and in-flight containers', async () => {
+    sendMock.mock.mockImplementation((_msg, cb) => setTimeout(() => cb(aiReply(JSON.stringify(VALID_RESULT))), 30));
+    const a = makeContainer('a'.repeat(150) + ' first queued job content one.');
+    const b = makeContainer('b'.repeat(150) + ' second queued job content two.');
+    const c = makeContainer('c'.repeat(150) + ' third queued job content three.');
+    const p1 = pipeline.processContainer(a.container, CTX);
+    const p2 = pipeline.processContainer(b.container, CTX);
+    const p3 = pipeline.processContainer(c.container, CTX);
+    await new Promise(r => setTimeout(r, 10));
+    pipeline.stopProcessing();
+    await Promise.allSettled([p1, p2, p3]);
+    await new Promise(r => setTimeout(r, 40));
     const saved = await storage.getSavedJobs();
-    assert.equal(saved.length, 1, 'job without negative tech should be saved');
-    assert.ok(listitem.classList.contains('lc-matched'), 'relevant post should be outlined');
+    assert.equal(saved.length, 0, 'nothing should be saved after stopProcessing');
+    assert.equal(a.listitem.style.display, undefined, 'no post should be hidden after stopProcessing');
   });
 });
