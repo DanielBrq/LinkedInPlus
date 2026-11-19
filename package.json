@@ -21,7 +21,8 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "vue-tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check:dist": "node scripts/check-dist.mjs"
   },
   "dependencies": {
     "ai": "^7.0.176",

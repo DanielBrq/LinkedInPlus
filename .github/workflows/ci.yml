@@ -16,5 +16,7 @@ jobs:
           node-version: 24
       - run: corepack enable
       - run: pnpm install
-      - run: npx eslint .
-      - run: npx node --test tests/*.test.mjs
+      - run: pnpm run typecheck
+      - run: pnpm run test
+      - run: pnpm run build
+      - run: pnpm run check:dist
