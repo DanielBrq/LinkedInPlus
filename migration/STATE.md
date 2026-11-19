@@ -1,16 +1,20 @@
 Estado (máx. 25 líneas; solo lo no derivable del repo)
-Fase completada: F2c (F2b: LLM → Decision Models; F2c: sin prefiltros regex)
-Checks: typecheck ok, test ok (18), node --test légacy ok
+Fase completada: F3 (F2b: LLM → Decision Models; F2c: sin prefiltros regex)
+Checks: typecheck ok, test ok (33)
 Vistas migradas: — (se llena en F4 desde INVENTORY)
-Gotchas / bloqueos: dispatcher usa `KNOWN_TYPES` (Record) para exhaustividad porque `switch` no estrecha a `never` uniones de un solo mensaje; la migración de datos legacy vive en `shared/settings.ts`; CI (.github/workflows/ci.yml) aún corre eslint y tests legados de tests/*.mjs → actualizar en F5
-F2b: Decision Models en `src/background/index.ts` (Gateway `typesafe-ai/jev`, pregunta `score` 0..4 → 0..100). Contrato `AI_CLASSIFY` intacto: mismo request y `apiKey`/`model` en storage; el modelo de lenguaje legado se mapea al default en `getClassifierConfig`. Borrados `background.js` y dep `valibot`.
-F2c: borrados `NEGATIVE_PATTERNS`, `extractPostAge()` y el filtro de 2+ meses (`lib/`, `src/shared/constants.ts`). Se conservan `normalizeText` (hash/dedupe, no filtra), `MIN_DESCRIPTION_LENGTH` y `LINKEDIN_URL` (valida remitente). El modelo no recibe la edad del post.
-Próxima: F3
+Gotchas / bloqueos: CI (.github/workflows/ci.yml) aún corre eslint y tests legados de tests/*.mjs → actualizar en F5
+F2b: Decision Models en `src/background/index.ts` (Gateway `typesafe-ai/jev`, pregunta `score` 0..4 → 0..100). Contrato `AI_CLASSIFY` intacto; el modelo legado se mapea al default en `getClassifierConfig`. Borrados `background.js` y dep `valibot`.
+F2c: borrados NEGATIVE_PATTERNS, extractPostAge() y el filtro 2+ meses. Se conservan normalizeText (ahora en src/content/parser.ts) y MIN_DESCRIPTION_LENGTH.
+F2: dispatcher usa `KNOWN_TYPES`; migración legacy en `shared/settings.ts`.
+F3: `clearProcessedHashes` ahora también limpia la caché AI (el original reutilizaba scores viejos tras cambiar config).
+F3: `ClassifierConfig.timeoutMs?: number` añadido para conservar el timeout opcional que leía aiFilter.
+F3: sin UI Vue; `.lc-pending` se inyecta como `<style>` en document porque estiliza posts del host (no shadow). Sin assets runtime → `web_accessible_resources` eliminado del manifest.
+F3: content scripts ya no usan import()/getURL: crxjs bundlea `src/content/index.ts` con sus imports.
+Próxima: F4
 Decisiones fijas (no re-evaluar; cambiar solo con justificación aquí)
 Plugin MV3: @crxjs/vite-plugin 3.0 (peer vite 8 cubierto); manifest.json se conserva, rutas apuntan a src/.
 Tailwind v3.4 (PostCSS), no v4: comportamiento determinista dentro de Shadow DOM.
-Tests: happy-dom + Vitest; `test.include` solo src/**/*.test.ts (los tests legados están en tests/*.mjs).
+Tests: happy-dom + Vitest; `test.include` solo src/**/*.test.ts.
 Código nuevo: noUncheckedIndexedAccess: true.
-Validador: sin librería (valibot se eliminó en F2b al quitar el schema del LLM); zod queda solo como peer transitivo de `ai`.
-Validador: sin librería (valibot se eliminó en F2b al quitar el schema del LLM); zod queda solo como peer transitivo de `ai`.
-pnpm 12: builds aprobados en pnpm-workspace.yaml (`allowBuilds`), no en package.json.
+Validador: sin librería (valibot eliminado en F2b); zod queda solo como peer transitivo de `ai`.
+pnpm 12: allowBuilds en pnpm-workspace.yaml.

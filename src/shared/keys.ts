@@ -4,6 +4,7 @@ export type ClassifierConfig = {
   filters: string
   negativeFilters: string
   threshold: number
+  timeoutMs?: number
 }
 
 export type StorageSchema = {

@@ -34,22 +34,5 @@
       "js": ["src/content/index.ts"],
       "run_at": "document_idle"
     }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "lib/constants.js",
-        "lib/parser.js",
-        "lib/settings.js",
-        "lib/utils.js",
-        "lib/observer.js",
-        "lib/aiFilter.js",
-        "lib/pipeline.js"
-      ],
-      "matches": [
-        "https://www.linkedin.com/*",
-        "https://linkedin.com/*"
-      ]
-    }
   ]
 }
