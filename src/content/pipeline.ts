@@ -1,6 +1,6 @@
 import { MIN_DESCRIPTION_LENGTH, MAX_PROCESSED_HASHES, CSS_PENDING } from '@/shared/constants'
 import type { ClassifierConfig } from '@/shared/keys'
-import { hashText } from '@/shared/utils'
+import { hashText } from './hash'
 import { classifyWithAI, clearAICache } from './aiFilter'
 import { extractDescription } from './parser'
 

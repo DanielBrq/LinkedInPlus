@@ -1,4 +1,4 @@
-import { HASH_ALGORITHM, HEX_BYTE_WIDTH, HEX_RADIX } from './constants'
+import { HASH_ALGORITHM, HEX_BYTE_WIDTH, HEX_RADIX } from '@/shared/constants'
 
 export async function hashText(text: string): Promise<string> {
   const data = new TextEncoder().encode(text)
