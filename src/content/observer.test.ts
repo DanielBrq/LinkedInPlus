@@ -35,4 +35,23 @@ describe('createObserver', () => {
 
     expect(found).toHaveLength(0)
   })
+
+  it('scans only newly added subtrees and includes a matching root', async () => {
+    const found: Element[] = []
+    const observer = createObserver('.target', (element) => found.push(element))
+    observer.start()
+    const added = document.createElement('div')
+    added.className = 'target'
+    document.body.appendChild(added)
+    await Promise.resolve()
+    vi.advanceTimersByTime(OBSERVER_DEBOUNCE_MS)
+    expect(found).toEqual([added])
+
+    const nested = document.createElement('div')
+    nested.className = 'target'
+    observer.scan(nested)
+    vi.advanceTimersByTime(OBSERVER_DEBOUNCE_MS)
+    expect(found).toEqual([added, nested])
+    observer.stop()
+  })
 })

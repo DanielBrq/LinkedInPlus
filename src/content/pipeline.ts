@@ -1,17 +1,22 @@
-import { MIN_DESCRIPTION_LENGTH, MAX_PROCESSED_HASHES, CSS_PENDING } from '@/shared/constants'
+import { MIN_DESCRIPTION_LENGTH, MAX_PROCESSED_HASHES, CSS_ACCEPTED, CSS_PENDING } from '@/shared/constants'
 import type { ClassifierConfig } from '@/shared/keys'
 import { hashText } from './hash'
 import { classifyWithAI, clearAICache } from './aiFilter'
 import { extractDescription } from './parser'
 
 const POST_CONTAINER_SELECTOR = '[role="listitem"]'
+const DISCARD_MEDIA_SELECTOR = 'video, img[alt="Ver imagen de celebración"]'
+const FEEDBACK_SELECTOR = 'div[id^="collapsed"][id$="FeedType_MAIN_FEED_RELEVANCE"]'
 const LOG_PREFIX = '[LinkedIn Collector]'
+const NOT_INTERESTED_MENU_TIMEOUT_MS = 2000
+const NOT_INTERESTED_FEEDBACK_TIMEOUT_MS = 10000
 export const MSG_CONFIG_UPDATED = 'Classification config updated — re-scanning.'
 
 type Context = { aiConfig: ClassifierConfig; notInterestedEnabled?: boolean }
 type Job = { run: () => Promise<void>; resolve: () => void }
 
 const processedHashes = new Set<string>()
+const processedVideoPosts = new WeakSet<HTMLElement>()
 let processGeneration = 0
 const queue: Job[] = []
 let busy = false
@@ -46,23 +51,75 @@ function getPost(container: Element): HTMLElement | null {
 
 function hidePost(container: Element): void {
   const post = getPost(container)
-  if (post) post.style.display = 'none'
+  post?.remove()
 }
 
-async function clickNotInterested(post: HTMLElement | null, enabled: boolean): Promise<void> {
-  if (!post || !enabled) return
+function findNotInterestedItem(): HTMLElement | null {
+  return (
+    Array.from(document.querySelectorAll<HTMLElement>('div[role="menuitem"]')).find((item) =>
+      /not interested|no me interesa|no es relevante|no tengo interés/i.test(item.textContent ?? ''),
+    ) ?? null
+  )
+}
+
+function waitForNotInterestedItem(): Promise<HTMLElement | null> {
+  const existing = findNotInterestedItem()
+  if (existing) return Promise.resolve(existing)
+
+  return new Promise((resolve) => {
+    const observer = new MutationObserver(() => {
+      const item = findNotInterestedItem()
+      if (item) finish(item)
+    })
+    const timer = setTimeout(() => finish(null), NOT_INTERESTED_MENU_TIMEOUT_MS)
+    const finish = (item: HTMLElement | null): void => {
+      clearTimeout(timer)
+      observer.disconnect()
+      resolve(item)
+    }
+    observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true })
+  })
+}
+
+function hideNotInterestedFeedback(): Promise<void> {
+  return new Promise((resolve) => {
+    const hide = (): boolean => {
+      const feedback = document.querySelector<HTMLElement>(FEEDBACK_SELECTOR)
+      if (!feedback) return false
+      feedback.remove()
+      return true
+    }
+    if (hide()) {
+      resolve()
+      return
+    }
+
+    let timer: ReturnType<typeof setTimeout>
+    const finish = (): void => {
+      clearTimeout(timer)
+      observer.disconnect()
+      resolve()
+    }
+    const observer = new MutationObserver(() => {
+      if (hide()) finish()
+    })
+    timer = setTimeout(finish, NOT_INTERESTED_FEEDBACK_TIMEOUT_MS)
+    observer.observe(document.documentElement, { childList: true, subtree: true })
+  })
+}
+
+async function clickNotInterested(post: HTMLElement | null): Promise<boolean> {
+  if (!post) return false
   const button = post.querySelector<HTMLButtonElement>(
     'button[aria-label*="control menu" i], button[aria-label*="menú" i], button[aria-label*="Más opciones" i], button[aria-label*="Más acciones" i]',
   )
-  if (!button) return
+  if (!button) return false
   button.click()
-  await new Promise((resolve) => setTimeout(resolve, 200))
-  for (const item of document.querySelectorAll<HTMLElement>('div[role="menuitem"]')) {
-    if (/not interested|no me interesa|no es relevante|no tengo interés/i.test(item.textContent ?? '')) {
-      item.click()
-      return
-    }
-  }
+  const item = await waitForNotInterestedItem()
+  if (!item) return false
+  item.click()
+  await hideNotInterestedFeedback()
+  return true
 }
 
 export function stopProcessing(): void {
@@ -79,6 +136,15 @@ async function processContainerBody(container: Element, { aiConfig, notIntereste
   if (!chrome.runtime?.id) return
   const generation = processGeneration
   try {
+    const post = getPost(container)
+    if (post?.querySelector(DISCARD_MEDIA_SELECTOR)) {
+      if (processedVideoPosts.has(post)) return
+      processedVideoPosts.add(post)
+      if (notInterestedEnabled && !(await clickNotInterested(post))) return
+      hidePost(post)
+      return
+    }
+
     const description = await extractDescription(container)
     if (!description) return
     const hash = await hashText(description)
@@ -90,12 +156,7 @@ async function processContainerBody(container: Element, { aiConfig, notIntereste
     }
     if (generation !== processGeneration) return
 
-    const post = container.closest(POST_CONTAINER_SELECTOR)
-    if (description.length < MIN_DESCRIPTION_LENGTH) {
-      await clickNotInterested(getPost(container), notInterestedEnabled)
-      hidePost(container)
-      return
-    }
+    if (description.length < MIN_DESCRIPTION_LENGTH) return
 
     post?.classList.add(CSS_PENDING)
     const result = await classifyWithAI(description, hash, aiConfig)
@@ -104,8 +165,10 @@ async function processContainerBody(container: Element, { aiConfig, notIntereste
     if ('reason' in result) return
 
     if (result.fitScore < aiConfig.threshold) {
-      await clickNotInterested(getPost(container), notInterestedEnabled)
+      if (notInterestedEnabled && !(await clickNotInterested(getPost(container)))) return
       hidePost(container)
+    } else {
+      post?.classList.add(CSS_ACCEPTED)
     }
   } catch (error) {
     if (String(error instanceof Error ? error.message : error).includes('Extension context invalidated')) return

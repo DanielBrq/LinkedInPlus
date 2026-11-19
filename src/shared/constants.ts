@@ -4,6 +4,7 @@ export const MAX_DESCRIPTION_CHARS = 6000
 
 export const MIN_DESCRIPTION_LENGTH = 100
 export const MAX_PROCESSED_HASHES = 2000
+export const MAX_AI_CACHE_ENTRIES = 1000
 export const REGEX_ZERO_WIDTH = /[\u200B-\u200D\uFEFF]/g
 export const REGEX_CONTROL_CHARS = /[\x00-\x1F\x7F-\x9F]/g
 export const REGEX_WHITESPACE = /\s+/g
@@ -11,6 +12,7 @@ export const REGEX_WHITESPACE = /\s+/g
 export const OBSERVER_DEBOUNCE_MS = 80
 export const INITIAL_SCAN_DELAY_MS = 2000
 export const CSS_PENDING = 'lc-pending'
+export const CSS_ACCEPTED = 'lc-accepted'
 
 export const HASH_ALGORITHM = 'SHA-256'
 export const HEX_RADIX = 16

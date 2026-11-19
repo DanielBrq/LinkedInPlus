@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, type Mock } from 'vitest'
-import { AI_FAILED_REASON, AI_UNAVAILABLE_REASON, DEFAULT_AI_TIMEOUT_MS } from '@/shared/constants'
+import { AI_FAILED_REASON, AI_UNAVAILABLE_REASON, DEFAULT_AI_TIMEOUT_MS, MAX_AI_CACHE_ENTRIES } from '@/shared/constants'
 import type { ClassifierConfig } from '@/shared/keys'
 import { classifyWithAI, clearAICache } from './aiFilter'
 
@@ -51,6 +51,14 @@ describe('classifyWithAI', () => {
     await classifyWithAI('post', 'hash', config)
     expect(await classifyWithAI('post', 'hash', config)).toEqual({ fitScore: 50, cached: true })
     expect(send).toHaveBeenCalledTimes(1)
+  })
+
+  it('evicts old entries when the successful-result cache reaches its limit', async () => {
+    for (let index = 0; index <= MAX_AI_CACHE_ENTRIES; index++) {
+      await classifyWithAI(`post-${index}`, `hash-${index}`, config)
+    }
+    await classifyWithAI('post-0', 'hash-0', config)
+    expect(send).toHaveBeenCalledTimes(MAX_AI_CACHE_ENTRIES + 2)
   })
 
   it('reports failures as a reason', async () => {

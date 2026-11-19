@@ -4,7 +4,7 @@ import type { ClassifyRequest } from '@/shared/messages'
 import { STORAGE_KEYS } from '@/shared/keys'
 import { DEFAULT_CLASSIFIER_CONFIG } from '@/shared/settings'
 import { set } from '@/shared/storage'
-import { handlers } from './index'
+import { handlers, updateMediaBlocking } from './index'
 
 vi.mock('ai', () => ({
   createGateway: vi.fn(() => ({ decisionModel: (model: string) => ({ modelId: model }) })),
@@ -99,5 +99,41 @@ describe('background AI_CLASSIFY', () => {
 
     expect(listener?.(request, linkedInSender, sendResponse)).toBe(true)
     await vi.waitFor(() => expect(sendResponse).toHaveBeenCalledWith({ ok: true, score: 50 }))
+  })
+
+  it('sends an error response if a message handler rejects', async () => {
+    vi.spyOn(handlers, 'AI_CLASSIFY').mockRejectedValueOnce(new Error('unexpected failure'))
+    const sendResponse = vi.fn()
+
+    expect(listener?.(request, linkedInSender, sendResponse)).toBe(true)
+    await vi.waitFor(() =>
+      expect(sendResponse).toHaveBeenCalledWith({ ok: false, error: 'unexpected failure' }),
+    )
+  })
+})
+
+describe('media blocking rule', () => {
+  it('adds the LinkedIn media request block only when enabled', async () => {
+    await updateMediaBlocking(true)
+    expect(chrome.declarativeNetRequest.updateDynamicRules).toHaveBeenLastCalledWith({
+      removeRuleIds: [1, 2],
+      addRules: [
+        {
+          id: 1,
+          priority: 1,
+          action: { type: 'block' },
+          condition: { urlFilter: '||media.licdn.com/dms/', resourceTypes: ['image', 'media'] },
+        },
+        {
+          id: 2,
+          priority: 1,
+          action: { type: 'block' },
+          condition: { urlFilter: '||dms.licdn.com/', resourceTypes: ['media'] },
+        },
+      ],
+    })
+
+    await updateMediaBlocking(false)
+    expect(chrome.declarativeNetRequest.updateDynamicRules).toHaveBeenLastCalledWith({ removeRuleIds: [1, 2] })
   })
 })

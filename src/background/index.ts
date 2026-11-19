@@ -14,6 +14,37 @@ const MIN_TIMEOUT_MS = 1000
 const MAX_TIMEOUT_MS = 60000
 const MAX_PROMPT_CHARS = 12000
 const MAX_MODEL_CHARS = 200
+const MEDIA_RULE_IDS = [1, 2]
+
+export async function updateMediaBlocking(enabled: boolean): Promise<void> {
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: MEDIA_RULE_IDS,
+    ...(enabled
+      ? {
+          addRules: [
+            {
+              id: 1,
+              priority: 1,
+              action: { type: 'block' },
+              condition: {
+                urlFilter: '||media.licdn.com/dms/',
+                resourceTypes: ['image', 'media'],
+              },
+            },
+            {
+              id: 2,
+              priority: 1,
+              action: { type: 'block' },
+              condition: {
+                urlFilter: '||dms.licdn.com/',
+                resourceTypes: ['media'],
+              },
+            },
+          ],
+        }
+      : {}),
+  })
+}
 
 // Ordered rubric for the Gateway decision score (0 = first level, 1 = last level).
 const FIT_CRITERIA = [
@@ -81,9 +112,35 @@ async function classify(request: ClassifyRequest, sender: chrome.runtime.Message
 
 export const handlers: MessageHandlers = { AI_CLASSIFY: classify }
 
+void get(STORAGE_KEYS.blockMedia)
+  .then((enabled) => updateMediaBlocking(enabled === true))
+  .catch((error: unknown) => console.error('[LinkedIn Collector] Media rule update failed:', errorMessage(error)))
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  const change = changes[STORAGE_KEYS.blockMedia]
+  if (areaName === 'local' && change) {
+    void updateMediaBlocking(change.newValue === true)
+      .catch((error: unknown) => console.error('[LinkedIn Collector] Media rule update failed:', errorMessage(error)))
+  }
+})
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  const pending = dispatch(handlers, message, sender)
+  let pending: ReturnType<typeof dispatch>
+  try {
+    pending = dispatch(handlers, message, sender)
+  } catch (error) {
+    sendResponse({ ok: false, error: errorMessage(error) } satisfies ClassifyResponse)
+    return
+  }
   if (!pending) return
-  pending.then(sendResponse)
+  const respond = (response: ClassifyResponse): void => {
+    try {
+      sendResponse(response)
+    } catch {
+      // The sender may have closed its message channel.
+    }
+  }
+  void pending.then(respond, (error: unknown) => {
+    respond({ ok: false, error: errorMessage(error) })
+  })
   return true
 })

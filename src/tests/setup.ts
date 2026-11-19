@@ -79,7 +79,11 @@ const runtime = {
   },
 }
 
-globalThis.chrome = { storage, runtime } as unknown as typeof chrome
+const declarativeNetRequest = {
+  updateDynamicRules: vi.fn(async () => {}),
+}
+
+globalThis.chrome = { storage, runtime, declarativeNetRequest } as unknown as typeof chrome
 
 beforeEach(() => {
   for (const store of Object.values(stores)) {

@@ -1,4 +1,10 @@
-import { AI_FAILED_REASON, AI_UNAVAILABLE_REASON, DEFAULT_AI_TIMEOUT_MS, MAX_DESCRIPTION_CHARS } from '@/shared/constants'
+import {
+  AI_FAILED_REASON,
+  AI_UNAVAILABLE_REASON,
+  DEFAULT_AI_TIMEOUT_MS,
+  MAX_AI_CACHE_ENTRIES,
+  MAX_DESCRIPTION_CHARS,
+} from '@/shared/constants'
 import type { ClassifierConfig } from '@/shared/keys'
 import { sendMessage } from '@/shared/messages'
 
@@ -79,6 +85,10 @@ export async function classifyWithAI(description: string, hash: string, config: 
     .then((result): ClassifyResult => {
       if ('reason' in result) return result
       sessionCache.set(hash, result)
+      if (sessionCache.size > MAX_AI_CACHE_ENTRIES) {
+        const oldest = sessionCache.keys().next().value
+        if (oldest !== undefined) sessionCache.delete(oldest)
+      }
       return { ...result, cached: false }
     })
     .catch((error: unknown) => {

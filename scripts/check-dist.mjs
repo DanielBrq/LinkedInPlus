@@ -5,10 +5,11 @@ import { join } from 'node:path'
 
 const DIST = process.argv[2] ?? 'dist'
 const EXPECTED = {
-  permissions: ['storage'],
+  permissions: ['storage', 'declarativeNetRequest'],
   host_permissions: [
     'https://www.linkedin.com/*',
     'https://linkedin.com/*',
+    'https://media.licdn.com/*',
     'https://ai-gateway.vercel.sh/*',
   ],
   content_matches: ['https://www.linkedin.com/*', 'https://linkedin.com/*'],

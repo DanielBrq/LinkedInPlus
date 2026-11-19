@@ -24,12 +24,24 @@ export function createObserver(selector: string, onFound: (element: Element) => 
   }
 
   function scan(root: ParentNode = document): void {
+    if (root instanceof Element && root.matches(selector)) schedule(root)
     for (const element of root.querySelectorAll(selector)) schedule(element)
+  }
+
+  function onMutations(records: MutationRecord[]): void {
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (node instanceof Element || node instanceof DocumentFragment) scan(node)
+      }
+      const target = record.target instanceof Element ? record.target : record.target.parentElement
+      const container = target?.closest(selector)
+      if (container) schedule(container)
+    }
   }
 
   function start(): void {
     if (observer) return
-    observer = new MutationObserver(() => scan())
+    observer = new MutationObserver(onMutations)
     observer.observe(document.body, { childList: true, subtree: true })
   }
 
