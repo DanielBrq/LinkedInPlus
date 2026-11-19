@@ -6,6 +6,7 @@ export function installChromeMock(initial = {}) {
   const data = { ...initial };
   const store = {
     get(keys, cb) {
+      if (keys === null) return cb({ ...data });
       const list = Array.isArray(keys) ? keys : [keys];
       const out = {};
       for (const k of list) {

@@ -1,65 +1,39 @@
-const MEDIA_RULE_ID = 1;
-const MEDIA_RULE = {
-  id: MEDIA_RULE_ID,
-  priority: 1,
-  action: { type: 'block' },
-  condition: {
-    resourceTypes: ['image', 'media'],
-    initiatorDomains: ['linkedin.com'],
-  },
-};
-
-// Read API key from storage so content script never has it
-async function getApiKey() {
-  const { ai_active_preset, ai_presets } = await chrome.storage.local.get(['ai_active_preset', 'ai_presets']);
-  if (!ai_presets || !ai_active_preset) return '';
-  const preset = ai_presets[ai_active_preset];
-  return preset?.apiKey || '';
-}
+import { createGateway, generateText, Output } from 'ai';
+import { z } from 'zod';
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'AI_FETCH') {
+  if (message.type === 'AI_CLASSIFY') {
     (async () => {
+      const controller = new AbortController();
+      const timeout = Number(message.timeout);
+      const timer = setTimeout(() => controller.abort(), Number.isFinite(timeout) ? Math.max(1000, Math.min(timeout, 60000)) : 15000);
       try {
-        const apiKey = await getApiKey();
-        const headers = {
-          'Content-Type': 'application/json',
-        };
-        if (apiKey) headers['Authorization'] = 'Bearer ' + apiKey;
-
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), message.timeout || 30000);
-        const res = await fetch(message.url, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(message.body),
-          signal: controller.signal,
+        if (!sender.tab?.url || !/^https:\/\/(www\.)?linkedin\.com\//.test(sender.tab.url)) {
+          throw new Error('Classification request rejected');
+        }
+        const { classifier_config: config } = await chrome.storage.local.get('classifier_config');
+        if (!config?.apiKey || typeof message.prompt !== 'string' || message.prompt.length > 12000 ||
+            typeof message.model !== 'string' || !message.model || message.model.length > 200) {
+          throw new Error('Missing Gateway configuration');
+        }
+        const gateway = createGateway({ apiKey: config.apiKey });
+        const { output } = await generateText({
+          model: gateway(message.model),
+          output: Output.object({
+            schema: z.object({
+              score: z.number().int().min(0).max(100),
+            }),
+          }),
+          prompt: message.prompt,
+          abortSignal: controller.signal,
         });
-        clearTimeout(timer);
-        const data = await res.json().catch(() => null);
-        // H9: validate response structure before forwarding
-        const valid = data && typeof data === 'object' && Array.isArray(data?.choices) && data.choices.length > 0;
-        sendResponse({ ok: res.ok, status: res.status, data: valid ? data : null, error: data ? null : 'Invalid JSON response' });
+        sendResponse({ ok: true, ...output });
       } catch (err) {
-        sendResponse({ ok: false, status: 0, data: null, error: err.message });
+        sendResponse({ ok: false, error: err.message });
+      } finally {
+        clearTimeout(timer);
       }
     })();
     return true;
-  }
-
-  if (message.type === 'MEDIA_BLOCK_ON') {
-    chrome.declarativeNetRequest.updateDynamicRules({
-      addRules: [MEDIA_RULE],
-      removeRuleIds: [MEDIA_RULE_ID],
-    });
-    return false;
-  }
-
-  if (message.type === 'MEDIA_BLOCK_OFF') {
-    chrome.declarativeNetRequest.updateDynamicRules({
-      addRules: [],
-      removeRuleIds: [MEDIA_RULE_ID],
-    });
-    return false;
   }
 });

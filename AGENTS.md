@@ -1,32 +1,30 @@
-# LinkedIn Job Description Collector — Architecture
+# Migración extensión MV3 → Vite + Vue 3 + TS + Tailwind + Vitest
 
-## Overview
-Runs on `linkedin.com/*`. Detects posts via `[data-testid="expandable-text-box"]`, extracts text, normalizes, sends to AI for classification. Only relevant matches saved. Non-matching → `display: none` on parent `[role="listitem"]`.
+`./docs/**`
 
-## Pipeline
-```
-DOM detect → NEGATIVE_PATTERNS pre-filter → age pre-filter (1+ month) → min-length check
-→ AI classify (structured JSON, FIFO queue max 1 concurrent, session cache per hash)
-→ sanitizeResult (validate technologies/location against description text)
-→ relevant=true + locationFilter match → save to chrome.storage.local
-→ relevant=false → hide + optional "Not interested" click
-```
+## Protocolo
+- Fases: F0 auditoría → F1 toolchain → F2 shared+background → F3 content → F4 vistas (una por ejecución) → F5 verificación final.
+- Ante "fase N": lee solo `migration/STATE.md`, `migration/phases/FN.md` y lo que ese archivo liste en **Lee**. No abras otras fases ni re-audites lo ya registrado en `migration/INVENTORY.md`.
+- Precondiciones: `git status` limpio y STATE.md marca N-1 completada. Si no, detente y avisa.
+- Una fase por sesión (`/new` entre fases).
 
-## Anti-hallucination guards
-1. **SYSTEM_PROMPT** enforces `ZERO FABRICATION RULE`: all fields extracted ONLY from description, never from user profile/preferences.
-2. **`buildUserPrompt()`** separates "User preferences (for relevance scoring only)" from "Job description (extract ALL field values from this section ONLY)".
-3. **`sanitizeResult()`** post-AI: strips technologies not found in description (case-insensitive), nullifies location if not in description.
-4. **`relevant`** requires AND: `parsed.relevant === true && fitScore >= 50`.
+## Contratos MV3 (inmutables salvo justificación escrita en STATE.md)
+Claves de `chrome.storage`, nombres/payloads de mensajes, permisos y `host_permissions`, `matches` de content scripts, selectores DOM de páginas anfitrionas. Fuente de verdad: `migration/INVENTORY.md`.
 
-## Key files
-- `lib/aiFilter.js` — AI classification, prompt, sanitize, cache
-- `lib/pipeline.js` — orchestrator, pre-filters, storage flow
-- `lib/parser.js` — DOM extraction, text normalization
-- `lib/storage.js` — SHA-256 dedup, chrome.storage.local
-- `lib/settings.js` — presets CRUD, config persistence
-- `lib/constants.js` — regexes, thresholds, storage keys
-- `content.js` — content script entry, dynamic imports
-- `background.js` — service worker (AI fetch proxy)
-- `presets/` — standalone preset management page
-- `viewer/` — standalone saved matches browser
-- `tests/` — node:test + mock-chrome helpers
+## Restricciones técnicas
+- CSP MV3: prohibido `eval()`, `new Function()`, plantillas Vue compiladas en runtime (solo SFC precompilados; sin alias a `vue/dist/vue.esm-bundler`), scripts/handlers inline en HTML, recursos remotos/CDN.
+- TypeScript `strict: true`. Sin `any`: usa `unknown` + narrowing.
+- Todo código nuevo lleva test Vitest (lógica pura, contratos de storage/mensajería, componentes clave), colocado junto al código (`*.test.ts`).
+- `chrome.*` se mockea solo en `src/tests/setup.ts` (mock propio, sin dependencias extra).
+
+## Economía de tokens
+- Busca con grep/glob; lee por rango de líneas. Nunca leas `node_modules/`, `dist/`, lockfiles.
+- Trunca salidas: `npm run test 2>&1 | tail -40`, `npm run typecheck 2>&1 | head -40`.
+- Ediciones puntuales; no reescribas archivos enteros para cambios pequeños.
+- Sin explicaciones en el chat. Respuesta final ≤10 líneas: checks, tag, bloqueos.
+- Máx. 3 intentos de corrección por check fallido; luego detente y registra el bloqueo en STATE.md.
+
+## Cierre de fase
+1. Checks de la fase en verde.
+2. Actualiza `migration/STATE.md` (máx. 25 líneas, solo lo no derivable del repo: decisiones, gotchas, desviaciones). No listes archivos: git los registra.
+3. `git add -A && git commit -m "migración: fase N" && git tag migration-fN` (local, sin push).

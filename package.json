@@ -1,7 +1,7 @@
 {
-  "name": "linkedin-job-collector",
+  "name": "linkedin-post-classifier",
   "version": "2.2.1",
-  "description": "AI-powered Chrome extension that extracts, classifies, and saves LinkedIn job descriptions matching your profile",
+  "description": "AI-powered LinkedIn post classifier",
   "keywords": [
     "chrome-extension",
     "linkedin",
@@ -13,9 +13,24 @@
   "author": "Daniel Barquero (https://www.linkedin.com/in/danielbrq/, https://github.com/DanielBrq/LinkedInPlus)",
   "license": "MIT",
   "private": true,
-  "engines": { "node": ">=20" },
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "test": "node --test --experimental-test-module-mocks tests/*.test.mjs",
-    "test:llm": "node tests/manual/test-llm-connection.mjs"
+    "build": "node scripts/build.mjs",
+    "test": "node --test --experimental-test-module-mocks tests/*.test.mjs"
+  },
+  "dependencies": {
+    "ai": "^7.0.176",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

@@ -316,8 +316,8 @@ DOM detect (MutationObserver)
   → NEGATIVE_PATTERNS → pre-filtra engagement bait
   → extractPostAge() → normaliza EN/ES → filtro 2+ meses
   → description.length < 100 → skip
-  → classifyWithAI() → LLM clasifica
-  → result.relevant → saveJob() o hidePost()
+  → classifyWithAI() → Gateway devuelve score
+  → score bajo el umbral → display: none
   → clickNotInterested() → feedback a LinkedIn
 ```
 
