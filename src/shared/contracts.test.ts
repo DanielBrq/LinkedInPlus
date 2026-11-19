@@ -8,6 +8,8 @@ describe('MV3 contracts', () => {
   it('keeps storage keys', () => {
     expect(STORAGE_KEYS.classifierConfig).toBe('classifier_config')
     expect(STORAGE_KEYS.collectorEnabled).toBe('collector_enabled')
+    expect(STORAGE_KEYS.notInterestedEnabled).toBe('not_interested_enabled')
+    expect(STORAGE_KEYS.blockMedia).toBe('block_media')
   })
 
   it('keeps the classifier_config shape', () => {

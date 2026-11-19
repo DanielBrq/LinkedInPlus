@@ -52,6 +52,26 @@ describe('processContainer', () => {
     expect(post.classList.contains(CSS_PENDING)).toBe(false)
   })
 
+  it('selects Not interested when enabled for a hidden post', async () => {
+    const { post, description } = createPost(longText)
+    const button = document.createElement('button')
+    button.setAttribute('aria-label', 'Open control menu')
+    button.addEventListener('click', () => {
+      const item = document.createElement('div')
+      item.setAttribute('role', 'menuitem')
+      item.textContent = 'Not interested'
+      item.addEventListener('click', () => { item.dataset.selected = 'true' })
+      document.body.appendChild(item)
+    })
+    post.appendChild(button)
+    send.mockResolvedValue({ ok: true, score: 10 })
+
+    await processContainer(description, { aiConfig: config(), notInterestedEnabled: true })
+
+    expect(document.querySelector('[role="menuitem"]')?.getAttribute('data-selected')).toBe('true')
+    expect(post.style.display).toBe('none')
+  })
+
   it('keeps posts at or above the threshold', async () => {
     const { post, description } = createPost(longText)
 

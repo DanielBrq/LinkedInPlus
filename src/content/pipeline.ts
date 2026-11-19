@@ -8,7 +8,7 @@ const POST_CONTAINER_SELECTOR = '[role="listitem"]'
 const LOG_PREFIX = '[LinkedIn Collector]'
 export const MSG_CONFIG_UPDATED = 'Classification config updated — re-scanning.'
 
-type Context = { aiConfig: ClassifierConfig }
+type Context = { aiConfig: ClassifierConfig; notInterestedEnabled?: boolean }
 type Job = { run: () => Promise<void>; resolve: () => void }
 
 const processedHashes = new Set<string>()
@@ -37,11 +37,32 @@ async function runQueue(): Promise<void> {
   busy = false
 }
 
-function hidePost(container: Element): void {
-  const post =
+function getPost(container: Element): HTMLElement | null {
+  return (
     container.closest<HTMLElement>(POST_CONTAINER_SELECTOR) ??
     (container instanceof HTMLElement ? container : null)
+  )
+}
+
+function hidePost(container: Element): void {
+  const post = getPost(container)
   if (post) post.style.display = 'none'
+}
+
+async function clickNotInterested(post: HTMLElement | null, enabled: boolean): Promise<void> {
+  if (!post || !enabled) return
+  const button = post.querySelector<HTMLButtonElement>(
+    'button[aria-label*="control menu" i], button[aria-label*="menú" i], button[aria-label*="Más opciones" i], button[aria-label*="Más acciones" i]',
+  )
+  if (!button) return
+  button.click()
+  await new Promise((resolve) => setTimeout(resolve, 200))
+  for (const item of document.querySelectorAll<HTMLElement>('div[role="menuitem"]')) {
+    if (/not interested|no me interesa|no es relevante|no tengo interés/i.test(item.textContent ?? '')) {
+      item.click()
+      return
+    }
+  }
 }
 
 export function stopProcessing(): void {
@@ -54,7 +75,7 @@ export function processContainer(container: Element, context: Context): Promise<
   return enqueue(() => processContainerBody(container, context))
 }
 
-async function processContainerBody(container: Element, { aiConfig }: Context): Promise<void> {
+async function processContainerBody(container: Element, { aiConfig, notInterestedEnabled = false }: Context): Promise<void> {
   if (!chrome.runtime?.id) return
   const generation = processGeneration
   try {
@@ -71,6 +92,7 @@ async function processContainerBody(container: Element, { aiConfig }: Context): 
 
     const post = container.closest(POST_CONTAINER_SELECTOR)
     if (description.length < MIN_DESCRIPTION_LENGTH) {
+      await clickNotInterested(getPost(container), notInterestedEnabled)
       hidePost(container)
       return
     }
@@ -81,7 +103,10 @@ async function processContainerBody(container: Element, { aiConfig }: Context): 
     if (generation !== processGeneration) return
     if ('reason' in result) return
 
-    if (result.fitScore < aiConfig.threshold) hidePost(container)
+    if (result.fitScore < aiConfig.threshold) {
+      await clickNotInterested(getPost(container), notInterestedEnabled)
+      hidePost(container)
+    }
   } catch (error) {
     if (String(error instanceof Error ? error.message : error).includes('Extension context invalidated')) return
     console.error(LOG_PREFIX, 'Processing error:', error)

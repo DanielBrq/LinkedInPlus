@@ -69,4 +69,13 @@ describe('popup', () => {
     await flushPromises()
     expect((toggle.element as HTMLInputElement).checked).toBe(true)
   })
+
+  it('persists the restored feature toggles', async () => {
+    const wrapper = await mountPopup()
+    await wrapper.get('#notInterestedToggle').setValue(true)
+    await wrapper.get('#blockMediaToggle').setValue(true)
+    await flushPromises()
+    const stored = await chrome.storage.local.get(['not_interested_enabled', 'block_media'])
+    expect(stored).toEqual({ not_interested_enabled: true, block_media: true })
+  })
 })

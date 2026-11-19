@@ -17,9 +17,7 @@ const OBSOLETE_KEYS = [
   'ai_active_preset',
   'save_matches',
   'hide_non_relevant',
-  'not_interested_enabled',
   'display_config',
-  'block_media',
 ]
 
 const LEGACY_MODEL = 'meta/llama-3.1-8b'

@@ -2,14 +2,21 @@
 import { onMounted, reactive, ref } from 'vue'
 import { STORAGE_KEYS, type ClassifierConfig } from '@/shared/keys'
 import { getClassifierConfig, saveClassifierConfig, saveEnabled } from '@/shared/settings'
+import { set } from '@/shared/storage'
 import { useStorage } from './useStorage'
 
 const field =
   'mb-2.5 block w-full rounded-md border border-[#3d434b] bg-[#1a1d21] px-2.5 py-[7px] text-[#e1e5ea] focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-[#6db3f2]'
 
 const enabled = useStorage(STORAGE_KEYS.collectorEnabled, true)
+const notInterestedEnabled = useStorage(STORAGE_KEYS.notInterestedEnabled, false)
+const blockMedia = useStorage(STORAGE_KEYS.blockMedia, false)
 const config = reactive<ClassifierConfig>({ apiKey: '', model: '', filters: '', negativeFilters: '', threshold: 65 })
 const status = ref('')
+
+const saveToggle = (key: 'notInterestedEnabled' | 'blockMedia', value: boolean): void => {
+  void set(STORAGE_KEYS[key], value)
+}
 
 onMounted(async () => {
   Object.assign(config, await getClassifierConfig())
@@ -53,6 +60,14 @@ async function save(): Promise<void> {
           />
         </label>
       </div>
+      <label class="mb-3 flex items-center justify-between rounded-lg border border-[#3d434b] bg-[#23272c] px-3.5 py-2.5">
+        <span class="font-semibold">Select “Not interested” automatically</span>
+        <input id="notInterestedToggle" v-model="notInterestedEnabled" type="checkbox" class="h-4 w-4 accent-[#6db3f2]" @change="saveToggle('notInterestedEnabled', notInterestedEnabled)">
+      </label>
+      <label class="mb-3 flex items-center justify-between rounded-lg border border-[#3d434b] bg-[#23272c] px-3.5 py-2.5">
+        <span class="font-semibold">Block images and video</span>
+        <input id="blockMediaToggle" v-model="blockMedia" type="checkbox" class="h-4 w-4 accent-[#6db3f2]" @change="saveToggle('blockMedia', blockMedia)">
+      </label>
       <div class="rounded-lg border border-[#3d434b] bg-[#23272c] p-3.5">
         <label for="apiKey" class="mb-[3px] block text-[13px] font-semibold">Vercel AI Gateway API key</label>
         <input
