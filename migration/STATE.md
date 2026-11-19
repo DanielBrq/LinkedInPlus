@@ -12,4 +12,5 @@ Tailwind v3.4 (PostCSS), no v4: comportamiento determinista dentro de Shadow DOM
 Tests: happy-dom + Vitest; `test.include` solo src/**/*.test.ts (los tests legados están en tests/*.mjs).
 Código nuevo: noUncheckedIndexedAccess: true.
 Validador: sin librería (valibot se eliminó en F2b al quitar el schema del LLM); zod queda solo como peer transitivo de `ai`.
+Validador: sin librería (valibot se eliminó en F2b al quitar el schema del LLM); zod queda solo como peer transitivo de `ai`.
 pnpm 12: builds aprobados en pnpm-workspace.yaml (`allowBuilds`), no en package.json.
