@@ -22,6 +22,8 @@ const OBSOLETE_KEYS = [
   'block_media',
 ]
 
+const LEGACY_MODEL = 'meta/llama-3.1-8b'
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
 
@@ -74,7 +76,8 @@ export async function saveEnabled(enabled: boolean): Promise<void> {
 
 export async function getClassifierConfig(): Promise<ClassifierConfig> {
   await migrateLegacyData()
-  const config = { ...DEFAULT_CLASSIFIER_CONFIG, ...(await get(STORAGE_KEYS.classifierConfig)) }
+  const stored = { ...DEFAULT_CLASSIFIER_CONFIG, ...(await get(STORAGE_KEYS.classifierConfig)) }
+  const config = { ...stored, model: stored.model === LEGACY_MODEL ? DEFAULT_MODEL : stored.model }
   return { ...config, threshold: clampThreshold(config.threshold) }
 }
 

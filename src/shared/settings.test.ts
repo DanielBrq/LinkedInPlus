@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { DEFAULT_MODEL } from './constants'
 import { STORAGE_KEYS } from './keys'
 import { get, getAll, set } from './storage'
 import {
@@ -40,6 +41,11 @@ describe('settings', () => {
 
     await saveClassifierConfig({ threshold: -10, apiKey: 'key' })
     expect(await getClassifierConfig()).toMatchObject({ threshold: 0, apiKey: 'key' })
+  })
+
+  it('upgrades the legacy language model to the decision default', async () => {
+    await set(STORAGE_KEYS.classifierConfig, { ...DEFAULT_CLASSIFIER_CONFIG, model: 'meta/llama-3.1-8b' })
+    expect((await getClassifierConfig()).model).toBe(DEFAULT_MODEL)
   })
 
   it('toggles the collector', async () => {

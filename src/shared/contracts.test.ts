@@ -16,7 +16,7 @@ describe('MV3 contracts', () => {
       model: DEFAULT_MODEL,
       threshold: 65,
     })
-    expect(DEFAULT_MODEL).toBe('meta/llama-3.1-8b')
+    expect(DEFAULT_MODEL).toBe('typesafe-ai/jev')
     expect(DEFAULT_AI_TIMEOUT_MS).toBe(15000)
   })
 })

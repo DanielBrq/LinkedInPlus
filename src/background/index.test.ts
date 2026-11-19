@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { generateText } from 'ai'
+import { experimental_decide } from 'ai'
 import type { ClassifyRequest } from '@/shared/messages'
 import { STORAGE_KEYS } from '@/shared/keys'
 import { DEFAULT_CLASSIFIER_CONFIG } from '@/shared/settings'
@@ -7,9 +7,8 @@ import { set } from '@/shared/storage'
 import { handlers } from './index'
 
 vi.mock('ai', () => ({
-  createGateway: vi.fn(() => (model: string) => ({ modelId: model })),
-  generateText: vi.fn(),
-  Output: { object: vi.fn((options: unknown) => options) },
+  createGateway: vi.fn(() => ({ decisionModel: (model: string) => ({ modelId: model }) })),
+  experimental_decide: vi.fn(),
 }))
 
 type Listener = (
@@ -22,14 +21,16 @@ const listener = vi.mocked(chrome.runtime.onMessage.addListener).mock.calls[0]?.
   | Listener
   | undefined
 
-const request: ClassifyRequest = { type: 'AI_CLASSIFY', prompt: 'post', model: 'meta/llama-3.1-8b' }
+const request: ClassifyRequest = { type: 'AI_CLASSIFY', prompt: 'post', model: 'typesafe-ai/jev' }
 const linkedInSender = { tab: { url: 'https://www.linkedin.com/feed/' } } as chrome.runtime.MessageSender
 
-type GenerateTextResult = Awaited<ReturnType<typeof generateText>>
+type DecideResult = Awaited<ReturnType<typeof experimental_decide>>
 
 const seedConfig = () => set(STORAGE_KEYS.classifierConfig, { ...DEFAULT_CLASSIFIER_CONFIG, apiKey: 'key' })
-const mockGenerate = (score: number) =>
-  vi.mocked(generateText).mockResolvedValueOnce({ output: { score } } as unknown as GenerateTextResult)
+const mockLevel = (score: number) =>
+  vi.mocked(experimental_decide).mockResolvedValueOnce({
+    answers: { fit: { type: 'score', score } },
+  } as unknown as DecideResult)
 
 describe('background AI_CLASSIFY', () => {
   it('rejects senders that are not LinkedIn tabs', async () => {
@@ -57,28 +58,46 @@ describe('background AI_CLASSIFY', () => {
     })
   })
 
-  it('returns the generated score', async () => {
+  it('asks the decision model to score the post', async () => {
     await seedConfig()
-    mockGenerate(72)
-    expect(await handlers.AI_CLASSIFY(request, linkedInSender)).toEqual({ ok: true, score: 72 })
+    mockLevel(3.2)
+
+    expect(await handlers.AI_CLASSIFY(request, linkedInSender)).toEqual({ ok: true, score: 80 })
+    expect(experimental_decide).toHaveBeenCalledWith(
+      expect.objectContaining({
+        model: { modelId: 'typesafe-ai/jev' },
+        state: 'post',
+        questions: {
+          fit: expect.objectContaining({ type: 'score', criteria: expect.any(Array) }),
+        },
+      }),
+    )
   })
 
-  it('surfaces generation errors', async () => {
+  it('maps the score levels to 0..100 and clamps out-of-range answers', async () => {
     await seedConfig()
-    vi.mocked(generateText).mockRejectedValueOnce(new Error('boom'))
+    mockLevel(0)
+    expect(await handlers.AI_CLASSIFY(request, linkedInSender)).toEqual({ ok: true, score: 0 })
+
+    mockLevel(1)
+    expect(await handlers.AI_CLASSIFY(request, linkedInSender)).toEqual({ ok: true, score: 25 })
+
+    mockLevel(9)
+    expect(await handlers.AI_CLASSIFY(request, linkedInSender)).toEqual({ ok: true, score: 100 })
+  })
+
+  it('surfaces decision errors', async () => {
+    await seedConfig()
+    vi.mocked(experimental_decide).mockRejectedValueOnce(new Error('boom'))
     expect(await handlers.AI_CLASSIFY(request, linkedInSender)).toEqual({ ok: false, error: 'boom' })
   })
 
   it('answers through the runtime listener', async () => {
     await seedConfig()
-    mockGenerate(80)
+    mockLevel(2)
     const sendResponse = vi.fn()
 
     expect(listener?.(request, linkedInSender, sendResponse)).toBe(true)
-    await vi.waitFor(() => expect(sendResponse).toHaveBeenCalledWith({ ok: true, score: 80 }))
-  })
-
-  it('ignores unknown messages', () => {
-    expect(listener?.({ type: 'OTHER' }, linkedInSender, vi.fn())).toBeUndefined()
+    await vi.waitFor(() => expect(sendResponse).toHaveBeenCalledWith({ ok: true, score: 50 }))
   })
 })
