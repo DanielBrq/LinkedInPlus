@@ -4,6 +4,7 @@
 | archivo | problema | acción | riesgo |
 |---|---|---|---|
 | `src/shared/utils.ts` | `hashText` solo lo consume `content/pipeline.ts` | Hecho: movido a `src/content/hash.ts` | bajo |
+| `src/content/parser.ts` | `normalizeText` no tiene consumidores externos | Hecho: quitado `export` innecesario | bajo |
 
 ## popup
 | archivo | problema | acción | riesgo |
@@ -20,4 +21,4 @@
 
 | Archivo | Problema | Acción | Riesgo |
 |---|---|---|---|
-| `src/content/index.ts` | Inicialización concentra carga, observer y suscripciones (41 líneas) | Evaluar dividir solo si queda una función claramente nombrada; mantener si requiere extraer lógica trivial | Bajo |
+| `src/content/index.ts` | Inicialización concentra carga, observer y suscripciones (41 líneas) | Descartado: dividir añadiría helpers triviales | Bajo |

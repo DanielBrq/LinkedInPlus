@@ -12,7 +12,7 @@ const EXPAND_BUTTON_SELECTOR =
   'button[aria-label*="see more" i], button[aria-label*="mostrar más" i], button[aria-label*="ver más" i], .jobs-description__footer-button, .jobs-description-content__footer-button'
 const EXPAND_WAIT_MS = 200
 
-export function normalizeText(text: string | null | undefined): string {
+function normalizeText(text: string | null | undefined): string {
   return (text ?? '')
     .toLowerCase()
     .replace(REGEX_ZERO_WIDTH, '')
