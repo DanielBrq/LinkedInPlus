@@ -37,11 +37,10 @@ describe('processContainer', () => {
     });
   });
 
-  test('hides prefiltered posts without calling the model', async () => {
-    const { container, listitem } = makeContainer('#OpenToWork looking for new opportunities, ' + 'x'.repeat(150));
+  test('sends previously prefiltered posts to the model', async () => {
+    const { container } = makeContainer('#OpenToWork looking for new opportunities, ' + 'x'.repeat(150));
     await pipeline.processContainer(container, context);
-    assert.equal(listitem.style.display, 'none');
-    assert.equal(send.mock.callCount(), 0);
+    assert.equal(send.mock.callCount(), 1);
   });
 
   test('hides scores below the configured threshold with display:none', async () => {

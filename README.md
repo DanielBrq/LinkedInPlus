@@ -14,7 +14,7 @@ The threshold ranges from 0–100. Posts scoring below it are hidden. Configurat
 ## Classification flow
 
 ```text
-LinkedIn post → short/old/known irrelevant prefilters
+LinkedIn post → text normalization
   → Vercel AI Gateway via Vercel AI SDK
   → score against positive and negative preferences
   → score below threshold: display:none

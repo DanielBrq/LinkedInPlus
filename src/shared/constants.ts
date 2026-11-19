@@ -12,12 +12,6 @@ export const OBSERVER_DEBOUNCE_MS = 80
 export const INITIAL_SCAN_DELAY_MS = 2000
 export const CSS_PENDING = 'lc-pending'
 
-export const NEGATIVE_PATTERNS = [
-  /#opentowork|looking for new opportunities|busco trabajo/i,
-  /\blike this post\b.*\bif\b|\bme gusta esta publicación\b/i,
-  /\bpoll\b|encuesta/i,
-]
-
 export const HASH_ALGORITHM = 'SHA-256'
 export const HEX_RADIX = 16
 export const HEX_BYTE_WIDTH = 2

@@ -52,6 +52,8 @@ LinkedIn trunca descripciones largas con un botón "See more" / "Mostrar más":
 </p>
 ```
 
+> Retirado en F2c: el Decision Model decide la relevancia, así que `extractPostAge()` y el filtro de 2+ meses ya no existen.
+
 - **Selector usado**: Ninguno específico. `extractPostAge()` escanea todos los `<span, time>` dentro del post.
 - **Ubicación**: `lib/parser.js` — `extractPostAge()`
 - **Lógica**: Busca texto de <16 chars que matchee `/\d+\s*(mo|mes|meses|w|sem|semanas?|d|días?|dias?|h|horas?)\b/`
@@ -313,8 +315,6 @@ DOM detect (MutationObserver)
       → findDescriptionElement() → span[data-testid="expandable-text-box"]
       → expandDescription() → click "See more" si existe
       → normalizeText() → lowercase, colapsa whitespace
-  → NEGATIVE_PATTERNS → pre-filtra engagement bait
-  → extractPostAge() → normaliza EN/ES → filtro 2+ meses
   → description.length < 100 → skip
   → classifyWithAI() → Gateway devuelve score
   → score bajo el umbral → display: none
@@ -329,4 +329,5 @@ DOM detect (MutationObserver)
 |-------|--------|---------------------|
 | ~2025 | `aria-label="Open control menu"` → `"Abrir el menú de controles para la publicación de {name}"` | Selector del menú "…" dejó de funcionar en ES |
 | ~2025 | "Not interested" → "No es relevante para mí" | Regex del menú actualizado |
+| 2026 | Decision Models asumen el filtrado | Retirados `NEGATIVE_PATTERNS`, `extractPostAge()` y sus regex |
 | 2026 | Edad del post en español: "1 mes", "1 sem", "1 día" | `extractPostAge` actualizado para normalizar ES→EN |
