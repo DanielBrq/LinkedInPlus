@@ -18,19 +18,28 @@
     "node": ">=20"
   },
   "scripts": {
-    "build": "node scripts/build.mjs",
-    "test": "node --test --experimental-test-module-mocks tests/*.test.mjs"
+    "dev": "vite",
+    "build": "vite build",
+    "typecheck": "vue-tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "ai": "^7.0.176",
-    "zod": "^4.6.7"
+    "valibot": "^1.5.0",
+    "vue": "^3.5.45"
   },
   "devDependencies": {
-    "esbuild": "^0.28.2"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "esbuild"
-    ]
+    "@crxjs/vite-plugin": "^3.0.0",
+    "@types/chrome": "^0.3.7",
+    "@vitejs/plugin-vue": "^6.0.11",
+    "@vue/test-utils": "^2.6.0",
+    "autoprefixer": "^10.6.2",
+    "happy-dom": "^21.0.4",
+    "postcss": "^8.5.33",
+    "tailwindcss": "3.4.19",
+    "typescript": "5.9.3",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.1",
+    "vue-tsc": "^3.3.14"
   }
 }

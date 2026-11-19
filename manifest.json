@@ -5,7 +5,7 @@
   "description": "Classifies LinkedIn posts against configurable job-search preferences.",
   "author": { "name": "Daniel Barquero", "url": "https://www.linkedin.com/in/danielbrq/" },
   "background": {
-    "service_worker": "dist/background.js",
+    "service_worker": "src/background/index.ts",
     "type": "module"
   },
   "permissions": [
@@ -22,7 +22,7 @@
     "128": "icons/icon128.png"
   },
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "src/popup/index.html",
     "default_title": "LinkedIn Post Classifier"
   },
   "content_scripts": [
@@ -31,7 +31,7 @@
         "https://www.linkedin.com/*",
         "https://linkedin.com/*"
       ],
-      "js": ["content.js"],
+      "js": ["src/content/index.ts"],
       "run_at": "document_idle"
     }
   ],

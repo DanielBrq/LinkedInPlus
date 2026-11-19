@@ -1,5 +1,5 @@
 import { createGateway, generateText, Output } from 'ai';
-import { z } from 'zod';
+import * as v from 'valibot';
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'AI_CLASSIFY') {
@@ -20,8 +20,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const { output } = await generateText({
           model: gateway(message.model),
           output: Output.object({
-            schema: z.object({
-              score: z.number().int().min(0).max(100),
+            schema: v.object({
+              score: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(100)),
             }),
           }),
           prompt: message.prompt,

@@ -1,12 +1,13 @@
 Estado (máx. 25 líneas; solo lo no derivable del repo)
-Fase completada: F0
-Checks (typecheck / test / build): —
+Fase completada: F1
+Checks: typecheck ok, test ok (3), build falla por falta de entry points src/ (llegan en F2–F4)
 Vistas migradas: — (se llena en F4 desde INVENTORY)
-Gotchas / bloqueos: —
-Próxima: F1
+Gotchas / bloqueos: build rojo hasta F4; CI (.github/workflows/ci.yml) aún corre eslint y tests legados de tests/*.mjs → actualizar en F5
+Próxima: F2
 Decisiones fijas (no re-evaluar; cambiar solo con justificación aquí)
-Plugin MV3: @crxjs/vite-plugin. En F1 verificar con pnpm view que su peer vite cubre la versión instalada; si no, usar vite-plugin-web-extension y anotarlo aquí.
+Plugin MV3: @crxjs/vite-plugin 3.0 (peer vite 8 cubierto); manifest.json se conserva, rutas apuntan a src/.
 Tailwind v3.4 (PostCSS), no v4: comportamiento determinista dentro de Shadow DOM.
-Tests: happy-dom; fallback jsdom si falla algo de Shadow DOM.
-manifest.json se conserva como archivo; solo cambian las rutas de entry points a fuentes src/.
+Tests: happy-dom + Vitest; `test.include` solo src/**/*.test.ts (los tests legados están en tests/*.mjs).
 Código nuevo: noUncheckedIndexedAccess: true.
+Validador: valibot en vez de zod (zod queda solo como peer transitivo de `ai`).
+pnpm 12: builds aprobados en pnpm-workspace.yaml (`allowBuilds`), no en package.json.
