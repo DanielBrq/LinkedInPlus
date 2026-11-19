@@ -2,7 +2,7 @@
 import { onMounted, reactive, ref } from 'vue'
 import { STORAGE_KEYS, type ClassifierConfig } from '@/shared/keys'
 import { getClassifierConfig, saveClassifierConfig, saveEnabled } from '@/shared/settings'
-import { useStorage } from '@/shared/useStorage'
+import { useStorage } from './useStorage'
 
 const field =
   'mb-2.5 block w-full rounded-md border border-[#3d434b] bg-[#1a1d21] px-2.5 py-[7px] text-[#e1e5ea] focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-[#6db3f2]'

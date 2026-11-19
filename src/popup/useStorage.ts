@@ -1,6 +1,6 @@
 import { onScopeDispose, ref, type Ref } from 'vue'
-import type { StorageKey, StorageSchema } from './keys'
-import { get, onChange } from './storage'
+import type { StorageKey, StorageSchema } from '@/shared/keys'
+import { get, onChange } from '@/shared/storage'
 
 export function useStorage<K extends StorageKey>(key: K, fallback: StorageSchema[K]): Ref<StorageSchema[K]> {
   const value = ref(fallback) as Ref<StorageSchema[K]>
