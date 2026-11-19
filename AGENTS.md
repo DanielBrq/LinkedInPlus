@@ -23,6 +23,7 @@ Claves de `chrome.storage`, nombres/payloads de mensajes, permisos y `host_permi
 - Ediciones puntuales; no reescribas archivos enteros para cambios pequeños.
 - Sin explicaciones en el chat. Respuesta final ≤10 líneas: checks, tag, bloqueos.
 - Máx. 3 intentos de corrección por check fallido; luego detente y registra el bloqueo en STATE.md.
+- ventana de contexto no mas de 80k, parar al alcanzar unmbral, entonces el usuario aplicará un /compact y continuaremos.
 
 ## Cierre de fase
 1. Checks de la fase en verde.
