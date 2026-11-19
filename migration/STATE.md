@@ -1,8 +1,9 @@
 Estado (máx. 25 líneas; solo lo no derivable del repo)
-Fase completada: F2
-Checks: typecheck ok, test ok (24), `grep window|document|from 'vue'` en background/shared limpio; build sigue rojo hasta F3–F4 (faltan entry points de content/popup)
+Fase completada: F2 (F2b: poda de tests)
+Checks: typecheck ok, test ok (17)
 Vistas migradas: — (se llena en F4 desde INVENTORY)
 Gotchas / bloqueos: dispatcher usa `KNOWN_TYPES` (Record) para exhaustividad porque `switch` no estrecha a `never` uniones de un solo mensaje; la migración de datos legacy vive en `shared/settings.ts`; CI (.github/workflows/ci.yml) aún corre eslint y tests legados de tests/*.mjs → actualizar en F5
+F2b: no hay Decision Models en el repo ni en STATE/INVENTORY/git log; el LLM es el clasificador vivo y contrato MV3 → no se borró nada de LLM. Lista B pendiente de confirmación.
 Próxima: F3
 Decisiones fijas (no re-evaluar; cambiar solo con justificación aquí)
 Plugin MV3: @crxjs/vite-plugin 3.0 (peer vite 8 cubierto); manifest.json se conserva, rutas apuntan a src/.

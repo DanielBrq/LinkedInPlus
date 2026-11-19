@@ -14,7 +14,7 @@ Claves de `chrome.storage`, nombres/payloads de mensajes, permisos y `host_permi
 ## Restricciones técnicas
 - CSP MV3: prohibido `eval()`, `new Function()`, plantillas Vue compiladas en runtime (solo SFC precompilados; sin alias a `vue/dist/vue.esm-bundler`), scripts/handlers inline en HTML, recursos remotos/CDN.
 - TypeScript `strict: true`. Sin `any`: usa `unknown` + narrowing.
-- Todo código nuevo lleva test Vitest (lógica pura, contratos de storage/mensajería, componentes clave), colocado junto al código (`*.test.ts`).
+- Test solo donde haya lógica con ramas, Decision Models o contratos. Prohibidos tests de montaje trivial, de mocks, de constantes y duplicados. Colocados junto al código (`*.test.ts`).
 - `chrome.*` se mockea solo en `src/tests/setup.ts` (mock propio, sin dependencias extra).
 
 ## Economía de tokens
